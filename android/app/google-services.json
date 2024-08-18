@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "916257358985",
+    "project_id": "aralink-d9c4c",
+    "storage_bucket": "aralink-d9c4c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:916257358985:android:7003ca12ba5c277b547258",
+        "android_client_info": {
+          "package_name": "com.example.aralink_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMEHoPSEd9rJAAB9xeGKQCeUCMyA8iXvo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
