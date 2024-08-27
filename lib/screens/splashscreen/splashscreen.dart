@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:aralink_app/screens/getstarted/getstarted.dart';
+import 'package:aralink_app/screens/onboarding/onboarding_view.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,7 +13,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Timer(Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => GetstartedScreen()),
+        MaterialPageRoute(builder: (context) => OnboardingView()),
       );
     });
   }
@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 253, 240, 3),
+      backgroundColor: Color.fromARGB(255, 255, 240, 183),
       body: Center(
         child: Image.asset(
           'assets/images/aralink-logo.png',
