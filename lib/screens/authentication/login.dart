@@ -1,10 +1,223 @@
+import 'package:aralink_app/common/clasessmethods.dart';
+import 'package:aralink_app/screens/authentication/register.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:iconsax/iconsax.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
+
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  var height, width;
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    height = MediaQuery.of(context).size.height;
+    width = MediaQuery.of(context).size.width;
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+        resizeToAvoidBottomInset: true,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              const SizedBox(height: 20),
+              _header(context),
+              _inputField(context),
+              _forgotPassword(context),
+              _signup(context),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _header(context) {
+    return Column(
+      children: [
+        Image.asset(
+          "assets/images/aralink-logo.png",
+          height: 150,
+          width: 150,
+        ),
+        SizedBox(height: 20),
+        Text(
+          "Welcome!",
+          style: GoogleFonts.lexend(
+            fontSize: width * 0.068,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        Text(
+          "Login to continue",
+          style: GoogleFonts.lexend(
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _isPasswordVisible = false;
+
+  Widget _inputField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 20),
+        TextField(
+          controller: _emailController,
+          cursorColor: Colors.black54,
+          decoration: InputDecoration(
+            hintStyle: const TextStyle(color: Colors.black54),
+            hintText: "Email Address",
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            fillColor: Colors.black.withOpacity(0.2),
+            filled: true,
+            prefixIcon: const Icon(
+              Iconsax.user,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        TextField(
+          controller: _passwordController,
+          cursorColor: Colors.black54,
+          obscureText: !_isPasswordVisible,
+          decoration: InputDecoration(
+            hintStyle: const TextStyle(color: Colors.black54),
+            hintText: "Password",
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+            fillColor: Colors.black.withOpacity(0.2),
+            filled: true,
+            prefixIcon: const Icon(
+              Iconsax.lock,
+              color: Colors.white,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordVisible ? Iconsax.eye : Iconsax.eye_slash,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isPasswordVisible = !_isPasswordVisible;
+                });
+              },
+            ),
+          ),
+        ),
+        SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _loginUser,
+          child: _isLoading
+              ? const CircularProgressIndicator(color: Colors.black)
+              : Text(
+                  "Login",
+                  style: GoogleFonts.lexend(
+                    color: Colors.black,
+                  ),
+                ),
+          style: ElevatedButton.styleFrom(
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+        SizedBox(height: 30),
+      ],
+    );
+  }
+
+  _forgotPassword(context) {
+    return TextButton(
+      onPressed: () {
+        // Implement forgot password
+      },
+      child: Text(
+        "Forgot Password?",
+        style: GoogleFonts.lexend(
+          fontSize: width * 0.032,
+          color: Colors.black54,
+        ),
+      ),
+    );
+  }
+
+  _signup(context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Don't have an account?",
+          style: GoogleFonts.lexend(
+            fontSize: width * 0.032,
+            color: Colors.black,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => RegisterScreen()),
+            );
+          },
+          child: Text(
+            "Sign up here!",
+            style: GoogleFonts.lexend(
+              fontSize: width * 0.032,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _loginUser() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => TabNavigation()),
+      );
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Login failed')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }

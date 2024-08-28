@@ -3,19 +3,19 @@ import 'onboarding_info.dart';
 class OnboardingItems {
   List<OnboardingInfo> items = [
     OnboardingInfo(
-        title: "Laboratory",
+        title: "Comprehensive Learning",
         descriptions:
-            "A scientist in his laboratory is not a mere technician: he is also a child confronting natural phenomena that impress him as though they were fairy tales.",
+            "Our app provides a comprehensive learning experience, covering all subjects from elementary to advanced levels.",
         image: "assets/images/studygif.gif"),
     OnboardingInfo(
-        title: "Diagnosis",
+        title: "Personalized Tutoring",
         descriptions:
-            "There is little you can do to stop a tornado, a hurricane, or a cancer diagnosis from changing your life in an instant.",
+            "Receive personalized tutoring sessions that cater to your unique learning style and pace, ensuring you master every topic.",
         image: "assets/images/studygif.gif"),
     OnboardingInfo(
-        title: "Chronic Diseases",
+        title: "Expert Guidance",
         descriptions:
-            "Cancer taught my family that my mom is much stronger than we ever thought.",
+            "Learn from expert tutors who are passionate about teaching and ready to help you excel in any subject.",
         image: "assets/images/studygif.gif"),
   ];
 }

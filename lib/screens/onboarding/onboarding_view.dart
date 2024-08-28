@@ -11,7 +11,7 @@ class OnboardingView extends StatefulWidget {
   State<OnboardingView> createState() => _OnboardingViewState();
 }
 
-const primaryColor = Color(0xFF7357a4);
+const primaryColor = Colors.black;
 
 class _OnboardingViewState extends State<OnboardingView> {
   final controller = OnboardingItems();
@@ -22,9 +22,10 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 255, 240, 183),
       bottomSheet: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        color: Color.fromARGB(255, 255, 240, 183),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 30),
         child: isLastPage
             ? getStarted()
             : Row(
@@ -33,7 +34,12 @@ class _OnboardingViewState extends State<OnboardingView> {
                   TextButton(
                       onPressed: () => pageController
                           .jumpToPage(controller.items.length - 1),
-                      child: const Text("Skip")),
+                      child: const Text(
+                        "Skip",
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      )),
                   SmoothPageIndicator(
                     controller: pageController,
                     count: controller.items.length,
@@ -50,7 +56,12 @@ class _OnboardingViewState extends State<OnboardingView> {
                       onPressed: () => pageController.nextPage(
                           duration: const Duration(milliseconds: 600),
                           curve: Curves.easeIn),
-                      child: const Text("Next")),
+                      child: const Text(
+                        "Next",
+                        style: TextStyle(
+                          color: Colors.black,
+                        ),
+                      )),
                 ],
               ),
       ),
