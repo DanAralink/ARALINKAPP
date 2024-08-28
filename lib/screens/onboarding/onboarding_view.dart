@@ -68,28 +68,36 @@ class _OnboardingViewState extends State<OnboardingView> {
       body: Container(
         margin: const EdgeInsets.symmetric(horizontal: 15),
         child: PageView.builder(
-            onPageChanged: (index) => setState(
-                () => isLastPage = controller.items.length - 1 == index),
-            itemCount: controller.items.length,
-            controller: pageController,
-            itemBuilder: (context, index) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(controller.items[index].image),
-                  const SizedBox(height: 15),
-                  Text(
-                    controller.items[index].title,
-                    style: const TextStyle(
-                        fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 15),
-                  Text(controller.items[index].descriptions,
-                      style: const TextStyle(color: Colors.grey, fontSize: 17),
-                      textAlign: TextAlign.center),
-                ],
-              );
-            }),
+          onPageChanged: (index) =>
+              setState(() => isLastPage = controller.items.length - 1 == index),
+          itemCount: controller.items.length,
+          controller: pageController,
+          itemBuilder: (context, index) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 200,
+                  height: 200,
+                  child: Image.asset(controller.items[index].image,
+                      fit: BoxFit.cover),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  controller.items[index].title,
+                  style: const TextStyle(
+                      fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  controller.items[index].descriptions,
+                  style: const TextStyle(color: Colors.grey, fontSize: 17),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
