@@ -14,11 +14,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SizedBox(height: 20),
         Text(
           "Sign Up",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.indieFlower(
             fontSize: width * 0.068,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -63,16 +67,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         Text(
           "Please fill up the necessary credentials.",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.indieFlower(
             color: Colors.black,
           ),
         ),
       ],
     );
   }
-
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
 
   Widget _inputField(BuildContext context, double width) {
     return Form(
@@ -82,10 +83,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           SizedBox(height: 20),
           TextFormField(
+            controller: _firstNameController,
+            cursorColor: Colors.black54,
+            decoration: InputDecoration(
+              hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
+              hintText: "First Name",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide.none,
+              ),
+              fillColor: Colors.black.withOpacity(0.2),
+              filled: true,
+              prefixIcon: Icon(
+                Iconsax.user,
+                color: Colors.white,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your first name';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 20),
+          TextFormField(
+            controller: _lastNameController,
+            cursorColor: Colors.black54,
+            decoration: InputDecoration(
+              hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
+              hintText: "Last Name",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide.none,
+              ),
+              fillColor: Colors.black.withOpacity(0.2),
+              filled: true,
+              prefixIcon: Icon(
+                Iconsax.user,
+                color: Colors.white,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your last name';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 20),
+          TextFormField(
             controller: _emailController,
             cursorColor: Colors.black54,
             decoration: InputDecoration(
-              hintStyle: TextStyle(color: Colors.black54),
+              hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
               hintText: "Email Address",
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
@@ -111,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             cursorColor: Colors.black54,
             obscureText: !_isPasswordVisible,
             decoration: InputDecoration(
-              hintStyle: TextStyle(color: Colors.black54),
+              hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
               hintText: "Password",
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
@@ -148,7 +199,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             cursorColor: Colors.black54,
             obscureText: !_isConfirmPasswordVisible,
             decoration: InputDecoration(
-              hintStyle: TextStyle(color: Colors.black54),
+              hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
               hintText: "Confirm Password",
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
@@ -186,9 +237,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ? CircularProgressIndicator(color: Colors.black)
                 : Text(
                     "Signup",
-                    style: GoogleFonts.lexend(
-                      color: Colors.black,
-                    ),
+                    style: GoogleFonts.indieFlower(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
                   ),
             style: ElevatedButton.styleFrom(
               shape: StadiumBorder(),
@@ -207,7 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         Text(
           "Already have an account?",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.indieFlower(
             fontSize: width * 0.032,
             color: Colors.black,
           ),
@@ -221,7 +273,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           },
           child: Text(
             "Log in here!",
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.indieFlower(
               fontSize: width * 0.032,
               color: Colors.black,
             ),
@@ -245,6 +297,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         _database.child("users/${userCredential.user!.uid}").set({
+          "firstName": _firstNameController.text.trim(),
+          "lastName": _lastNameController.text.trim(),
           "email": _emailController.text.trim(),
           "password": _passwordController.text.trim(),
         });
@@ -255,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Registration failed')),
+          SnackBar(content: Text(e.message ?? "Registration failed")),
         );
       } finally {
         setState(() {

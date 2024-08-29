@@ -1,6 +1,7 @@
 import 'package:aralink_app/screens/authentication/login.dart';
 import 'package:aralink_app/screens/onboarding/onboarding_items.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -34,9 +35,10 @@ class _OnboardingViewState extends State<OnboardingView> {
                   TextButton(
                       onPressed: () => pageController
                           .jumpToPage(controller.items.length - 1),
-                      child: const Text(
+                      child: Text(
                         "Skip",
-                        style: TextStyle(
+                        style: GoogleFonts.indieFlower(
+                          fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       )),
@@ -47,8 +49,8 @@ class _OnboardingViewState extends State<OnboardingView> {
                         duration: const Duration(milliseconds: 600),
                         curve: Curves.easeIn),
                     effect: const WormEffect(
-                      dotHeight: 12,
-                      dotWidth: 12,
+                      dotHeight: 10,
+                      dotWidth: 6,
                       activeDotColor: primaryColor,
                     ),
                   ),
@@ -56,47 +58,58 @@ class _OnboardingViewState extends State<OnboardingView> {
                       onPressed: () => pageController.nextPage(
                           duration: const Duration(milliseconds: 600),
                           curve: Curves.easeIn),
-                      child: const Text(
+                      child: Text(
                         "Next",
-                        style: TextStyle(
+                        style: GoogleFonts.indieFlower(
+                          fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       )),
                 ],
               ),
       ),
-      body: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 15),
-        child: PageView.builder(
-          onPageChanged: (index) =>
-              setState(() => isLastPage = controller.items.length - 1 == index),
-          itemCount: controller.items.length,
-          controller: pageController,
-          itemBuilder: (context, index) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: Image.asset(controller.items[index].image,
-                      fit: BoxFit.cover),
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  controller.items[index].title,
-                  style: const TextStyle(
-                      fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  controller.items[index].descriptions,
-                  style: const TextStyle(color: Colors.grey, fontSize: 17),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            );
-          },
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 15),
+          child: PageView.builder(
+            onPageChanged: (index) =>
+                setState(() => isLastPage = controller.items.length - 1 == index),
+            itemCount: controller.items.length,
+            controller: pageController,
+            itemBuilder: (context, index) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: Image.asset(controller.items[index].image,
+                        fit: BoxFit.cover),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    controller.items[index].title,
+                    style: GoogleFonts.indieFlower(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    controller.items[index].descriptions,
+                    style: GoogleFonts.indieFlower(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

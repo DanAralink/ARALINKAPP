@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
         SizedBox(height: 20),
         Text(
           "Welcome!",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.indieFlower(
             fontSize: width * 0.068,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         Text(
           "Login to continue",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.indieFlower(
             color: Colors.black,
           ),
         ),
@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
           controller: _emailController,
           cursorColor: Colors.black54,
           decoration: InputDecoration(
-            hintStyle: const TextStyle(color: Colors.black54),
+            hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
             hintText: "Email Address",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(18),
@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
           cursorColor: Colors.black54,
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
-            hintStyle: const TextStyle(color: Colors.black54),
+            hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
             hintText: "Password",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(18),
@@ -136,8 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
               ? const CircularProgressIndicator(color: Colors.black)
               : Text(
                   "Login",
-                  style: GoogleFonts.lexend(
+                  style: GoogleFonts.indieFlower(
                     color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold
                   ),
                 ),
           style: ElevatedButton.styleFrom(
@@ -157,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       child: Text(
         "Forgot Password?",
-        style: GoogleFonts.lexend(
+        style: GoogleFonts.indieFlower(
           fontSize: width * 0.032,
           color: Colors.black54,
         ),
@@ -171,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
       children: [
         Text(
           "Don't have an account?",
-          style: GoogleFonts.lexend(
+          style: GoogleFonts.indieFlower(
             fontSize: width * 0.032,
             color: Colors.black,
           ),
@@ -185,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
           },
           child: Text(
             "Sign up here!",
-            style: GoogleFonts.lexend(
+            style: GoogleFonts.indieFlower(
               fontSize: width * 0.032,
               color: Colors.black54,
             ),

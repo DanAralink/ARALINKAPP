@@ -1,10 +1,188 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-class MyProfile extends StatelessWidget {
-  const MyProfile({super.key});
+import 'package:aralink_app/screens/authentication/login.dart';
+import 'package:aralink_app/screens/my-profile/about.dart';
+import 'package:aralink_app/screens/my-profile/edit-profile.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:image_picker/image_picker.dart';
+
+class MyProfile extends StatefulWidget {
+  const MyProfile({Key? key}) : super(key: key);
+
+  @override
+  _MyProfileState createState() => _MyProfileState();
+}
+
+class _MyProfileState extends State<MyProfile> {
+  final User? user = FirebaseAuth.instance.currentUser;
+  final DatabaseReference dbRef =
+      FirebaseDatabase.instance.ref().child('users');
+  final FirebaseStorage storage = FirebaseStorage.instance;
+  final ImagePicker _picker = ImagePicker();
+
+  String? firstName;
+  String? lastName;
+  String? email;
+  String? profileImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  void _fetchUserData() async {
+    if (user != null) {
+      final snapshot = await dbRef.child(user!.uid).once();
+      if (snapshot.snapshot.value != null) {
+        final userData = snapshot.snapshot.value as Map<dynamic, dynamic>?;
+        setState(() {
+          firstName = userData?['firstName'] ?? 'First Name';
+          lastName = userData?['lastName'] ?? 'Last Name';
+          email = userData?['email'] ?? 'daniel_austin@yourdomain.com';
+          profileImageUrl =
+              userData?['profileImageUrl'] ?? 'https://via.placeholder.com/150';
+        });
+      }
+    }
+  }
+
+  Future<void> _uploadProfileImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+
+    final file = File(image.path);
+    final storageRef = storage.ref().child('profile_images/${user!.uid}.jpg');
+
+    try {
+      await storageRef.putFile(file);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      await dbRef.child(user!.uid).update({'profileImageUrl': downloadUrl});
+      setState(() {
+        profileImageUrl = downloadUrl;
+      });
+    } catch (e) {
+      print("Error uploading image: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            Center(
+              child: Column(
+                children: [
+                  GestureDetector(
+                    onTap: _uploadProfileImage,
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage: NetworkImage(
+                          profileImageUrl ?? 'https://via.placeholder.com/150'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${firstName ?? 'Loading...'} ${lastName ?? ''}',
+                    style: GoogleFonts.indieFlower(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22),
+                  ),
+                  Text(
+                    email ?? 'Loading...',
+                    style: GoogleFonts.indieFlower(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                children: [
+                  ProfileMenuItem(
+                      icon: Iconsax.user,
+                      text: 'Edit Profile',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => EditProfileScreen()),
+                        );
+                      }),
+                  ProfileMenuItem(
+                      icon: Iconsax.message_question,
+                      text: 'About',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AboutScreen()),
+                        );
+                      }),
+                  ListTile(
+                    leading: const Icon(Iconsax.logout, color: Colors.red),
+                    title: Text(
+                      'Logout',
+                      style: GoogleFonts.indieFlower(
+                          color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => LoginScreen()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ProfileMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final VoidCallback onTap;
+
+  const ProfileMenuItem({
+    Key? key,
+    required this.icon,
+    required this.text,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.teal),
+      title: Text(
+        text,
+        style: GoogleFonts.indieFlower(
+            color: Colors.black54, fontWeight: FontWeight.bold),
+      ),
+      onTap: onTap,
+    );
   }
 }
