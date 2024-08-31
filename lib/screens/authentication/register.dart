@@ -1,9 +1,12 @@
+import 'package:aralink_app/common/map_screen.dart';
 import 'package:aralink_app/screens/authentication/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -23,6 +26,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  LatLng? _userLocation; // To store the selected location
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +37,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
         resizeToAvoidBottomInset: true,
         body: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _header(context, width),
               _inputField(context, width),
               _signup(context, width),
@@ -56,7 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           height: 150,
           width: 150,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           "Sign Up",
           style: GoogleFonts.indieFlower(
@@ -81,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _firstNameController,
             cursorColor: Colors.black54,
@@ -94,7 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               fillColor: Colors.black.withOpacity(0.2),
               filled: true,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Iconsax.user,
                 color: Colors.white,
               ),
@@ -106,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _lastNameController,
             cursorColor: Colors.black54,
@@ -119,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               fillColor: Colors.black.withOpacity(0.2),
               filled: true,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Iconsax.user,
                 color: Colors.white,
               ),
@@ -131,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _emailController,
             cursorColor: Colors.black54,
@@ -144,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               fillColor: Colors.black.withOpacity(0.2),
               filled: true,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Iconsax.user,
                 color: Colors.white,
               ),
@@ -156,7 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _passwordController,
             cursorColor: Colors.black54,
@@ -170,7 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               fillColor: Colors.black.withOpacity(0.2),
               filled: true,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Iconsax.lock,
                 color: Colors.white,
               ),
@@ -193,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _confirmPasswordController,
             cursorColor: Colors.black54,
@@ -207,7 +211,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               fillColor: Colors.black.withOpacity(0.2),
               filled: true,
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Iconsax.lock,
                 color: Colors.white,
               ),
@@ -230,60 +234,103 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: _isLoading ? null : _registerUser,
-            child: _isLoading
-                ? CircularProgressIndicator(color: Colors.black)
-                : Text(
-                    "Signup",
-                    style: GoogleFonts.indieFlower(
-                        color: Colors.black,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
-                  ),
+            onPressed: _isLoading
+                ? null
+                : () async {
+                    LatLng? selectedLocation = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MapScreen()),
+                    );
+
+                    if (selectedLocation != null) {
+                      setState(() {
+                        _userLocation = selectedLocation;
+                      });
+                    }
+                  },
+            child: Text(
+              "Select Location",
+              style: GoogleFonts.indieFlower(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
+            ),
             style: ElevatedButton.styleFrom(
-              shape: StadiumBorder(),
-              padding: EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: Colors.teal,
             ),
           ),
-          SizedBox(height: 30),
+          if (_userLocation != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Location: ${_userLocation!.latitude}, ${_userLocation!.longitude}",
+                style: const TextStyle(color: Colors.black),
+              ),
+            ),
+        const SizedBox(height: 30),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _registerUser,
+          child: _isLoading
+              ? const CircularProgressIndicator(color: Colors.black)
+              : Text(
+                  "Sign up",
+                  style: GoogleFonts.indieFlower(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold
+                  ),
+                ),
+          style: ElevatedButton.styleFrom(
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+        const SizedBox(height: 30),
         ],
       ),
     );
   }
 
   Widget _signup(BuildContext context, double width) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        Text(
-          "Already have an account?",
-          style: GoogleFonts.indieFlower(
-            fontSize: width * 0.032,
-            color: Colors.black,
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => LoginScreen()),
-            );
-          },
-          child: Text(
-            "Log in here!",
-            style: GoogleFonts.indieFlower(
-              fontSize: width * 0.032,
-              color: Colors.black,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Already have an account?",
+              style: GoogleFonts.indieFlower(
+                fontSize: width * 0.032,
+                color: Colors.black,
+              ),
             ),
-          ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              child: Text(
+                "Log in here!",
+                style: GoogleFonts.indieFlower(
+                  fontSize: width * 0.032,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Future<void> _registerUser() async {
+  void _registerUser() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -301,11 +348,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           "lastName": _lastNameController.text.trim(),
           "email": _emailController.text.trim(),
           "password": _passwordController.text.trim(),
+          "location": _userLocation != null
+              ? {
+                  "latitude": _userLocation!.latitude,
+                  "longitude": _userLocation!.longitude,
+                }
+              : null,
         });
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
