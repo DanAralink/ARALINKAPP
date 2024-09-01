@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
           height: 150,
           width: 150,
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Text(
           "Welcome Tutee!",
           style: GoogleFonts.indieFlower(
@@ -131,9 +131,13 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        SizedBox(height: 30),
+        const SizedBox(height: 30),
         ElevatedButton(
           onPressed: _isLoading ? null : _loginUser,
+          style: ElevatedButton.styleFrom(
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
           child: _isLoading
               ? const CircularProgressIndicator(color: Colors.teal)
               : Text(
@@ -143,12 +147,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontSize: 16,
                       fontWeight: FontWeight.bold),
                 ),
-          style: ElevatedButton.styleFrom(
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
         ),
-        SizedBox(height: 30),
+        const SizedBox(height: 30),
       ],
     );
   }
@@ -213,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => TutorLoginScreen()),
+              MaterialPageRoute(builder: (context) => const TutorLoginScreen()),
             );
           },
           child: Text(
@@ -241,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => TabNavigation()),
+        MaterialPageRoute(builder: (context) => const TabNavigation()),
       );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

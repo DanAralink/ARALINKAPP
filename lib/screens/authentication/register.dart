@@ -249,18 +249,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       });
                     }
                   },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: Colors.teal,
+            ),
             child: Text(
               "Select Location",
               style: GoogleFonts.indieFlower(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              backgroundColor: Colors.teal,
             ),
           ),
           if (_userLocation != null)
@@ -274,6 +274,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 30),
           ElevatedButton(
             onPressed: _isLoading ? null : _registerUser,
+            style: ElevatedButton.styleFrom(
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
             child: _isLoading
                 ? const CircularProgressIndicator(color: Colors.teal)
                 : Text(
@@ -283,10 +287,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold),
                   ),
-            style: ElevatedButton.styleFrom(
-              shape: const StadiumBorder(),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
           ),
           const SizedBox(height: 30),
         ],

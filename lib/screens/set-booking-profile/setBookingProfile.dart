@@ -1,8 +1,127 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-class SetBookingProfile extends StatelessWidget {
+class SetBookingProfile extends StatefulWidget {
   const SetBookingProfile({super.key});
+
+  @override
+  _SetBookingProfileState createState() => _SetBookingProfileState();
+}
+
+class _SetBookingProfileState extends State<SetBookingProfile> {
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers for text input fields
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _statusController = TextEditingController();
+  final TextEditingController _totalHoursController = TextEditingController();
+  final TextEditingController _rateController = TextEditingController();
+  final TextEditingController _taglineController = TextEditingController();
+
+  // Dropdown values
+  String? _selectedDayAvailability;
+  String? _selectedSession;
+  String? _selectedGradeLevel;
+  String? _selectedSubject;
+
+  // Dropdown options
+  final List<String> _dayAvailabilityOptions = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
+  final List<String> _sessionOptions = ['Morning', 'Afternoon', 'Evening'];
+  final List<String> _gradeLevelOptions = [
+    'Elementary',
+    'Middle School',
+    'High School',
+    'College'
+  ];
+  final List<String> _subjectOptions = [
+    'Mathematics',
+    'Science',
+    'English',
+    'History',
+    'Computer Science'
+  ];
+
+  // Flag to indicate if data has been fetched
+  bool _isDataFetched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfileData();
+  }
+
+  // Method to fetch the existing profile data
+  void _fetchProfileData() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final uid = user.uid; // Use the user ID as the identifier
+      final DatabaseReference databaseRef =
+          FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
+
+      final snapshot = await databaseRef.get();
+      if (snapshot.exists) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+
+        setState(() {
+          _selectedDayAvailability = data['dayAvailability'] as String?;
+          _addressController.text = data['address'] as String? ?? '';
+          _statusController.text = data['status'] as String? ?? '';
+          _selectedSession = data['preferredSessions'] as String?;
+          _totalHoursController.text = data['totalHours'] as String? ?? '';
+          _rateController.text = data['ratePerHour'] as String? ?? '';
+          _selectedGradeLevel = data['gradeLevel'] as String?;
+          _selectedSubject = data['subjects'] as String?;
+          _taglineController.text = data['tagline'] as String? ?? '';
+
+          _isDataFetched = true;
+        });
+      }
+    }
+  }
+
+  // Method to save the form data to Firebase
+  void _saveBookingProfile() async {
+    if (_formKey.currentState!.validate()) {
+      final User? user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        final uid = user.uid; // Use the user ID as the identifier
+        final DatabaseReference databaseRef =
+            FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
+
+        await databaseRef.set({
+          'dayAvailability': _selectedDayAvailability,
+          'address': _addressController.text,
+          'status': _statusController.text,
+          'preferredSessions': _selectedSession,
+          'totalHours': _totalHoursController.text,
+          'ratePerHour': _rateController.text,
+          'gradeLevel': _selectedGradeLevel,
+          'subjects': _selectedSubject,
+          'tagline': _taglineController.text,
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profile saved successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('User not logged in!')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +135,156 @@ class SetBookingProfile extends StatelessWidget {
           style: GoogleFonts.indieFlower(
               fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
         ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(10.0),
+        child: _isDataFetched
+            ? Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // First Row with two columns
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildDropdownField(
+                                  'Day Availability', _dayAvailabilityOptions,
+                                  (value) {
+                                setState(() {
+                                  _selectedDayAvailability = value;
+                                });
+                              }, _selectedDayAvailability),
+                              _buildTextField('Total Hours', _totalHoursController),
+                              _buildDropdownField('Grade Level', _gradeLevelOptions,
+                                  (value) {
+                                setState(() {
+                                  _selectedGradeLevel = value;
+                                });
+                              }, _selectedGradeLevel),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildDropdownField(
+                                  'Tutoring Sessions', _sessionOptions, (value) {
+                                setState(() {
+                                  _selectedSession = value;
+                                });
+                              }, _selectedSession),
+                              _buildTextField('Rate/Hour', _rateController),
+                              _buildDropdownField('Subject', _subjectOptions,
+                                  (value) {
+                                setState(() {
+                                  _selectedSubject = value;
+                                });
+                              }, _selectedSubject),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTextField('Status', _statusController),
+                        _buildTextField('Address', _addressController),
+                        _buildTextField('Tagline', _taglineController),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _saveBookingProfile,
+                      child: Text('Save Profile'),
+                    ),
+                  ],
+                ),
+              )
+            : Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+
+  // Helper method to create text fields
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.indieFlower(
+              color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.teal, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.teal, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.2),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter $label';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  // Helper method to create dropdown fields
+  Widget _buildDropdownField(String label, List<String> options,
+      ValueChanged<String?> onChanged, String? selectedValue) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: DropdownButtonFormField<String>(
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.indieFlower(
+              color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.teal, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.teal, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.2),
+        ),
+        value: selectedValue,
+        onChanged: onChanged,
+        items: options.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(
+              value,
+              style: GoogleFonts.indieFlower(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16),
+            ),
+          );
+        }).toList(),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please select $label';
+          }
+          return null;
+        },
       ),
     );
   }

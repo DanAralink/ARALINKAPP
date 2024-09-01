@@ -1,8 +1,5 @@
 import 'dart:io';
-
 import 'package:aralink_app/screens/authentication/login.dart';
-import 'package:aralink_app/screens/my-profile/about.dart';
-import 'package:aralink_app/screens/my-profile/edit-profile.dart';
 import 'package:aralink_app/screens/my-tutor-profile/about.dart';
 import 'package:aralink_app/screens/my-tutor-profile/edit-tutor-profile.dart';
 import 'package:flutter/material.dart';
@@ -47,8 +44,8 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
           firstName = userData?['firstName'] ?? 'First Name';
           lastName = userData?['lastName'] ?? 'Last Name';
           email = userData?['email'] ?? 'daniel_austin@yourdomain.com';
-          profileImageUrl =
-              userData?['profileImageUrl'] ?? 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg';
+          profileImageUrl = userData?['profileImageUrl'] ??
+              'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg';
         });
       }
     }
@@ -91,8 +88,8 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                     onTap: _uploadProfileImage,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(
-                          profileImageUrl ?? 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
+                      backgroundImage: NetworkImage(profileImageUrl ??
+                          'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -124,7 +121,8 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => EditTutorProfileScreen()),
+                              builder: (context) =>
+                                  const EditTutorProfileScreen()),
                         );
                       }),
                   ProfileMenuItem(
@@ -156,20 +154,20 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
-                                  Text(
+                                  const Text(
                                     'Confirm Logout',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18.0,
                                     ),
                                   ),
-                                  SizedBox(height: 16),
-                                  Text(
+                                  const SizedBox(height: 16),
+                                  const Text(
                                     'Are you sure you want to log out?',
                                     style: TextStyle(fontSize: 16.0),
                                     textAlign: TextAlign.center,
                                   ),
-                                  SizedBox(height: 24),
+                                  const SizedBox(height: 24),
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceEvenly,
@@ -177,11 +175,11 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                                       TextButton(
                                         style: TextButton.styleFrom(
                                           foregroundColor: Colors.black,
-                                          backgroundColor: Color.fromARGB(
+                                          backgroundColor: const Color.fromARGB(
                                               255, 255, 240, 183),
-                                          minimumSize: Size(100, 40),
+                                          minimumSize: const Size(100, 40),
                                         ),
-                                        child: Text('Logout'),
+                                        child: const Text('Logout'),
                                         onPressed: () {
                                           Navigator.of(context).pop(true);
                                         },
@@ -189,11 +187,11 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                                       TextButton(
                                         style: TextButton.styleFrom(
                                           foregroundColor: Colors.black,
-                                          backgroundColor: Color.fromARGB(
+                                          backgroundColor: const Color.fromARGB(
                                               255, 255, 240, 183),
-                                          minimumSize: Size(100, 40),
+                                          minimumSize: const Size(100, 40),
                                         ),
-                                        child: Text('Cancel'),
+                                        child: const Text('Cancel'),
                                         onPressed: () {
                                           Navigator.of(context).pop(false);
                                         },
@@ -212,7 +210,7 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                           await FirebaseAuth.instance.signOut();
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
+                              builder: (context) => const LoginScreen(),
                             ),
                           );
                         } catch (e) {

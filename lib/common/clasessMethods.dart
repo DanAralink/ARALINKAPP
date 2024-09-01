@@ -1,4 +1,3 @@
-import 'package:aralink_app/screens/home/homeBookedTutees.dart';
 import 'package:aralink_app/screens/home/home.dart';
 import 'package:aralink_app/screens/home/homeTutors.dart';
 import 'package:aralink_app/screens/my-booked-tutees/BookedTutees.dart';
@@ -76,7 +75,7 @@ class _TabNavigationState extends State<TabNavigation> {
               ),
             ],
           ),
-          body: TabBarView(
+          body: const TabBarView(
             children: [
               HomeScreen(),
               SearchTutorsNearby(),
@@ -85,15 +84,15 @@ class _TabNavigationState extends State<TabNavigation> {
             ],
           ),
           bottomNavigationBar: Padding(
-            padding: EdgeInsets.only(bottom: 25),
+            padding: const EdgeInsets.only(bottom: 25),
             child: TabBar(
               unselectedLabelColor: Colors.teal[200],
               labelColor: Colors.teal,
-              indicator: UnderlineTabIndicator(
+              indicator: const UnderlineTabIndicator(
                 borderSide: BorderSide(width: 2.0, color: Colors.teal),
                 insets: EdgeInsets.symmetric(horizontal: 40),
               ),
-              tabs: [
+              tabs: const [
                 Tab(
                   icon: Icon(Iconsax.grid_3),
                 ),
@@ -180,7 +179,7 @@ class _TutorTabNavigationState extends State<TutorTabNavigation> {
               ),
             ],
           ),
-          body: TabBarView(
+          body: const TabBarView(
             children: [
               HomeTutorsScreen(),
               SetBookingProfile(),
@@ -189,15 +188,15 @@ class _TutorTabNavigationState extends State<TutorTabNavigation> {
             ],
           ),
           bottomNavigationBar: Padding(
-            padding: EdgeInsets.only(bottom: 25),
+            padding: const EdgeInsets.only(bottom: 25),
             child: TabBar(
               unselectedLabelColor: Colors.teal[200],
               labelColor: Colors.teal,
-              indicator: UnderlineTabIndicator(
+              indicator: const UnderlineTabIndicator(
                 borderSide: BorderSide(width: 2.0, color: Colors.teal),
                 insets: EdgeInsets.symmetric(horizontal: 40),
               ),
-              tabs: [
+              tabs: const [
                 Tab(
                   icon: Icon(Iconsax.grid_3),
                 ),
