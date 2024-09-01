@@ -1,5 +1,5 @@
 import 'package:aralink_app/common/map_screen.dart';
-import 'package:aralink_app/screens/authentication/login.dart';
+import 'package:aralink_app/screens/authentication/tutor-login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +7,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:latlong2/latlong.dart';
 
-class RegisterScreen extends StatefulWidget {
+class TutorRegisterScreen extends StatefulWidget {
   @override
-  _RegisterScreenState createState() => _RegisterScreenState();
+  _TutorRegisterScreenState createState() => _TutorRegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   final _formKey = GlobalKey<FormState>();
@@ -61,7 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         const SizedBox(height: 20),
         Text(
-          "Register as Tutee!",
+          "Register as Tutor!",
           style: GoogleFonts.indieFlower(
             fontSize: width * 0.068,
             fontWeight: FontWeight.bold,
@@ -311,7 +311,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const TutorLoginScreen()),
                 );
               },
               child: Text(
@@ -341,11 +342,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           password: _passwordController.text.trim(),
         );
 
-        _database.child("users/${userCredential.user!.uid}").set({
+        _database.child("tutors/${userCredential.user!.uid}").set({
           "firstName": _firstNameController.text.trim(),
           "lastName": _lastNameController.text.trim(),
           "email": _emailController.text.trim(),
           "password": _passwordController.text.trim(),
+          "account-status": "not verified",
           "location": _userLocation != null
               ? {
                   "latitude": _userLocation!.latitude,
@@ -356,7 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          MaterialPageRoute(builder: (context) => const TutorLoginScreen()),
         );
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(

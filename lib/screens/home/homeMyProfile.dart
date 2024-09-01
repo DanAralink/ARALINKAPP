@@ -11,14 +11,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 
-class MyProfile extends StatefulWidget {
-  const MyProfile({Key? key}) : super(key: key);
+class HomeMyProfile extends StatefulWidget {
+  const HomeMyProfile({Key? key}) : super(key: key);
 
   @override
-  _MyProfileState createState() => _MyProfileState();
+  _HomeMyProfileState createState() => _HomeMyProfileState();
 }
 
-class _MyProfileState extends State<MyProfile> {
+class _HomeMyProfileState extends State<HomeMyProfile> {
   final User? user = FirebaseAuth.instance.currentUser;
   final DatabaseReference dbRef =
       FirebaseDatabase.instance.ref().child('users');
@@ -46,7 +46,7 @@ class _MyProfileState extends State<MyProfile> {
           lastName = userData?['lastName'] ?? 'Last Name';
           email = userData?['email'] ?? 'daniel_austin@yourdomain.com';
           profileImageUrl =
-              userData?['profileImageUrl'] ?? 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg';
+              userData?['profileImageUrl'] ?? 'https://via.placeholder.com/150';
         });
       }
     }
@@ -76,6 +76,15 @@ class _MyProfileState extends State<MyProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+        centerTitle: true,
+        title: Text(
+          'My Profile',
+          style: GoogleFonts.indieFlower(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
@@ -89,8 +98,8 @@ class _MyProfileState extends State<MyProfile> {
                     onTap: _uploadProfileImage,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(
-                          profileImageUrl ?? 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
+                      backgroundImage: NetworkImage(profileImageUrl ??
+                          'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
                     ),
                   ),
                   const SizedBox(height: 8),

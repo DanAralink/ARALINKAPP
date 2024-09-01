@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:aralink_app/screens/authentication/login.dart';
-import 'package:aralink_app/screens/my-profile/about.dart';
-import 'package:aralink_app/screens/my-profile/edit-profile.dart';
+import 'package:aralink_app/screens/authentication/tutor-login.dart';
+import 'package:aralink_app/screens/my-tutor-profile/about.dart';
+import 'package:aralink_app/screens/my-tutor-profile/edit-tutor-profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -11,17 +11,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 
-class MyProfile extends StatefulWidget {
-  const MyProfile({Key? key}) : super(key: key);
+class HomeMyTutorsProfile extends StatefulWidget {
+  const HomeMyTutorsProfile({Key? key}) : super(key: key);
 
   @override
-  _MyProfileState createState() => _MyProfileState();
+  _HomeMyTutorsProfileState createState() => _HomeMyTutorsProfileState();
 }
 
-class _MyProfileState extends State<MyProfile> {
-  final User? user = FirebaseAuth.instance.currentUser;
+class _HomeMyTutorsProfileState extends State<HomeMyTutorsProfile> {
+  final User? tutor = FirebaseAuth.instance.currentUser;
   final DatabaseReference dbRef =
-      FirebaseDatabase.instance.ref().child('users');
+      FirebaseDatabase.instance.ref().child('tutors');
   final FirebaseStorage storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
 
@@ -37,8 +37,8 @@ class _MyProfileState extends State<MyProfile> {
   }
 
   void _fetchUserData() async {
-    if (user != null) {
-      final snapshot = await dbRef.child(user!.uid).once();
+    if (tutor != null) {
+      final snapshot = await dbRef.child(tutor!.uid).once();
       if (snapshot.snapshot.value != null) {
         final userData = snapshot.snapshot.value as Map<dynamic, dynamic>?;
         setState(() {
@@ -46,7 +46,7 @@ class _MyProfileState extends State<MyProfile> {
           lastName = userData?['lastName'] ?? 'Last Name';
           email = userData?['email'] ?? 'daniel_austin@yourdomain.com';
           profileImageUrl =
-              userData?['profileImageUrl'] ?? 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg';
+              userData?['profileImageUrl'] ?? 'https://via.placeholder.com/150';
         });
       }
     }
@@ -57,13 +57,13 @@ class _MyProfileState extends State<MyProfile> {
     if (image == null) return;
 
     final file = File(image.path);
-    final storageRef = storage.ref().child('profile_images/${user!.uid}.jpg');
+    final storageRef = storage.ref().child('profile_images/${tutor!.uid}.jpg');
 
     try {
       await storageRef.putFile(file);
       final downloadUrl = await storageRef.getDownloadURL();
 
-      await dbRef.child(user!.uid).update({'profileImageUrl': downloadUrl});
+      await dbRef.child(tutor!.uid).update({'profileImageUrl': downloadUrl});
       setState(() {
         profileImageUrl = downloadUrl;
       });
@@ -76,6 +76,15 @@ class _MyProfileState extends State<MyProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+        centerTitle: true,
+        title: Text(
+          'My Profile',
+          style: GoogleFonts.indieFlower(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
@@ -89,8 +98,8 @@ class _MyProfileState extends State<MyProfile> {
                     onTap: _uploadProfileImage,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(
-                          profileImageUrl ?? 'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
+                      backgroundImage: NetworkImage(profileImageUrl ??
+                          'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -122,7 +131,7 @@ class _MyProfileState extends State<MyProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => EditProfileScreen()),
+                              builder: (context) => EditTutorProfileScreen()),
                         );
                       }),
                   ProfileMenuItem(
@@ -132,7 +141,7 @@ class _MyProfileState extends State<MyProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => AboutScreen()),
+                              builder: (context) => AboutTutorScreen()),
                         );
                       }),
                   ListTile(
@@ -210,7 +219,7 @@ class _MyProfileState extends State<MyProfile> {
                           await FirebaseAuth.instance.signOut();
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
+                              builder: (context) => TutorLoginScreen(),
                             ),
                           );
                         } catch (e) {

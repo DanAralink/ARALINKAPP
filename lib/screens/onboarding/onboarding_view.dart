@@ -39,7 +39,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                         "Skip",
                         style: GoogleFonts.indieFlower(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Colors.teal,
                         ),
                       )),
                   SmoothPageIndicator(
@@ -51,7 +51,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                     effect: const WormEffect(
                       dotHeight: 10,
                       dotWidth: 6,
-                      activeDotColor: primaryColor,
+                      activeDotColor: Colors.teal,
                     ),
                   ),
                   TextButton(
@@ -62,7 +62,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                         "Next",
                         style: GoogleFonts.indieFlower(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: Colors.teal,
                         ),
                       )),
                 ],
@@ -73,8 +73,8 @@ class _OnboardingViewState extends State<OnboardingView> {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 15),
           child: PageView.builder(
-            onPageChanged: (index) =>
-                setState(() => isLastPage = controller.items.length - 1 == index),
+            onPageChanged: (index) => setState(
+                () => isLastPage = controller.items.length - 1 == index),
             itemCount: controller.items.length,
             controller: pageController,
             itemBuilder: (context, index) {
@@ -118,22 +118,22 @@ class _OnboardingViewState extends State<OnboardingView> {
   Widget getStarted() {
     return Container(
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8), color: primaryColor),
+          borderRadius: BorderRadius.circular(8), color: Colors.teal),
       width: MediaQuery.of(context).size.width * .9,
       height: 55,
       child: TextButton(
-          onPressed: () async {
-            final pres = await SharedPreferences.getInstance();
-            pres.setBool("onboarding", true);
+        onPressed: () async {
+          final pres = await SharedPreferences.getInstance();
+          pres.setBool("onboarding", true);
 
-            if (!mounted) return;
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (context) => LoginScreen()));
-          },
-          child: const Text(
-            "Get started",
-            style: TextStyle(color: Colors.white),
-          )),
+          if (!mounted) return;
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => LoginScreen()));
+        },
+        child: Text("Get started",
+            style: GoogleFonts.indieFlower(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+      ),
     );
   }
 }

@@ -19,7 +19,6 @@ dependencies:
   fluttertoast: ^8.2.6
   geolocator: ^12.0.0
   google_fonts: ^6.2.1
-  google_maps_flutter: ^2.9.0
   iconsax: ^0.0.8
   image_picker: ^1.1.2
   latlong2: ^0.9.1

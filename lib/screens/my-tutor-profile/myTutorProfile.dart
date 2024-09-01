@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:aralink_app/screens/authentication/login.dart';
 import 'package:aralink_app/screens/my-profile/about.dart';
 import 'package:aralink_app/screens/my-profile/edit-profile.dart';
+import 'package:aralink_app/screens/my-tutor-profile/about.dart';
+import 'package:aralink_app/screens/my-tutor-profile/edit-tutor-profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -11,17 +13,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 
-class MyProfile extends StatefulWidget {
-  const MyProfile({Key? key}) : super(key: key);
+class MyTutorProfile extends StatefulWidget {
+  const MyTutorProfile({Key? key}) : super(key: key);
 
   @override
-  _MyProfileState createState() => _MyProfileState();
+  _MyTutorProfileState createState() => _MyTutorProfileState();
 }
 
-class _MyProfileState extends State<MyProfile> {
-  final User? user = FirebaseAuth.instance.currentUser;
+class _MyTutorProfileState extends State<MyTutorProfile> {
+  final User? tutor = FirebaseAuth.instance.currentUser;
   final DatabaseReference dbRef =
-      FirebaseDatabase.instance.ref().child('users');
+      FirebaseDatabase.instance.ref().child('tutors');
   final FirebaseStorage storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
 
@@ -37,8 +39,8 @@ class _MyProfileState extends State<MyProfile> {
   }
 
   void _fetchUserData() async {
-    if (user != null) {
-      final snapshot = await dbRef.child(user!.uid).once();
+    if (tutor != null) {
+      final snapshot = await dbRef.child(tutor!.uid).once();
       if (snapshot.snapshot.value != null) {
         final userData = snapshot.snapshot.value as Map<dynamic, dynamic>?;
         setState(() {
@@ -57,13 +59,13 @@ class _MyProfileState extends State<MyProfile> {
     if (image == null) return;
 
     final file = File(image.path);
-    final storageRef = storage.ref().child('profile_images/${user!.uid}.jpg');
+    final storageRef = storage.ref().child('profile_images/${tutor!.uid}.jpg');
 
     try {
       await storageRef.putFile(file);
       final downloadUrl = await storageRef.getDownloadURL();
 
-      await dbRef.child(user!.uid).update({'profileImageUrl': downloadUrl});
+      await dbRef.child(tutor!.uid).update({'profileImageUrl': downloadUrl});
       setState(() {
         profileImageUrl = downloadUrl;
       });
@@ -122,7 +124,7 @@ class _MyProfileState extends State<MyProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => EditProfileScreen()),
+                              builder: (context) => EditTutorProfileScreen()),
                         );
                       }),
                   ProfileMenuItem(
@@ -132,7 +134,7 @@ class _MyProfileState extends State<MyProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => AboutScreen()),
+                              builder: (context) => AboutTutorScreen()),
                         );
                       }),
                   ListTile(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class EditProfileScreen extends StatelessWidget {
-  const EditProfileScreen({super.key});
+class HomeMyBookedTutors extends StatelessWidget {
+  const HomeMyBookedTutors({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class EditProfileScreen extends StatelessWidget {
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
         centerTitle: true,
         title: Text(
-          'Edit Profile',
+          'My Booked Tutors',
           style: GoogleFonts.indieFlower(
               fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
         ),

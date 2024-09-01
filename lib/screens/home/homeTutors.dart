@@ -1,12 +1,13 @@
-import 'package:aralink_app/screens/home/homeMyBookedTutors.dart';
-import 'package:aralink_app/screens/home/homeMyProfile.dart';
-import 'package:aralink_app/screens/home/homeSearchTutorsNearby.dart';
+
+import 'package:aralink_app/screens/home/homeBookedTutees.dart';
+import 'package:aralink_app/screens/home/homeMyTurorsProfile.dart';
+import 'package:aralink_app/screens/set-booking-profile/setBookingProfile.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeTutorsScreen extends StatelessWidget {
+  const HomeTutorsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeMyProfile()),
+                  MaterialPageRoute(builder: (context) => HomeMyTutorsProfile()),
                 );
               },
               backgroundImage: 'assets/images/cardsbg.png',
@@ -32,25 +33,25 @@ class HomeScreen extends StatelessWidget {
             _buildDashboardCard(
               context,
               icon: Iconsax.book,
-              title: 'My Bookings',
-              description: 'Check your booked sessions',
+              title: 'My Booked Tutees',
+              description: 'Check your tutees sessions',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeMyBookedTutors()),
+                  MaterialPageRoute(builder: (context) => HomeBookedTutees()),
                 );
               },
               backgroundImage: 'assets/images/cardsbg.png',
             ),
             _buildDashboardCard(
               context,
-              icon: Iconsax.search_normal_14,
-              title: 'Search Tutors',
-              description: 'Find tutors nearby or online',
+              icon: Iconsax.user_edit,
+              title: 'Booking Profile',
+              description: 'Set your booking profile details',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeSearchTutorsNearby()),
+                  MaterialPageRoute(builder: (context) => SetBookingProfile()),
                 );
               },
               backgroundImage: 'assets/images/cardsbg.png',

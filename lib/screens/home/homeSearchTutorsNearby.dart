@@ -3,14 +3,23 @@ import 'package:geolocator/geolocator.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class SearchTutorsNearby extends StatelessWidget {
-  const SearchTutorsNearby({super.key});
+class HomeSearchTutorsNearby extends StatelessWidget {
+  const HomeSearchTutorsNearby({super.key});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+          centerTitle: true,
+          title: Text(
+            'Search Tutors Nearby',
+            style: GoogleFonts.indieFlower(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+          ),
+        ),
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
         body: Column(
           children: [
