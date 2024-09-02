@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -22,8 +23,20 @@ class _MapScreenState extends State<MapScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 240, 183),
       appBar: AppBar(
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: const Icon(
+            Iconsax.arrow_left_2,
+          ),
+        ),
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
-        title: Text('Select Location'),
+        title: Text(
+          'Select Location',
+          style: GoogleFonts.indieFlower(
+              fontSize: 22, fontWeight: FontWeight.bold),
+        ),
       ),
       body: Stack(
         children: [

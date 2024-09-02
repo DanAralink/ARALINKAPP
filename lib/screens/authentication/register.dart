@@ -275,6 +275,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ElevatedButton(
             onPressed: _isLoading ? null : _registerUser,
             style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
               shape: const StadiumBorder(),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
@@ -283,7 +284,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 : Text(
                     "Sign up",
                     style: GoogleFonts.indieFlower(
-                        color: Colors.black,
+                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold),
                   ),

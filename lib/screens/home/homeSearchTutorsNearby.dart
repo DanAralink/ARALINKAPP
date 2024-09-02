@@ -1,7 +1,9 @@
+import 'package:aralink_app/screens/search-tutors-nearby/tutorsScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconsax/iconsax.dart';
 
 class HomeSearchTutorsNearby extends StatelessWidget {
   const HomeSearchTutorsNearby({super.key});
@@ -12,6 +14,14 @@ class HomeSearchTutorsNearby extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: const Icon(
+            Iconsax.arrow_left_2,
+          ),
+        ),
           backgroundColor: const Color.fromARGB(255, 255, 240, 183),
           centerTitle: true,
           title: Text(
@@ -59,7 +69,8 @@ class NearbyTutorsTab extends StatefulWidget {
 }
 
 class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
-  final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref('tutors');
+  final DatabaseReference _databaseRef =
+      FirebaseDatabase.instance.ref('tutors');
   List<Map<String, dynamic>> nearbyTutors = [];
   bool isLoading = false;
 
@@ -74,12 +85,10 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
             height: 40,
             width: double.infinity,
             child: TextButton(
-              child: Text("Serach Nearby Tutors",
+              child: Text("Search Nearby Tutors",
                   style: GoogleFonts.indieFlower(
                       fontSize: 16, fontWeight: FontWeight.bold)),
-              onPressed: () {
-                _searchNearbyTutors();
-              },
+              onPressed: _searchNearbyTutors,
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
                 backgroundColor: Colors.teal,
@@ -134,6 +143,8 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
       itemCount: nearbyTutors.length,
       itemBuilder: (context, index) {
         final tutor = nearbyTutors[index];
+        final tutorUserId = tutor['userId']?.toString() ?? '';
+
         return Padding(
           padding: const EdgeInsets.only(left: 10, right: 10),
           child: Card(
@@ -174,7 +185,16 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
                       fontSize: 14, color: Colors.white70),
                 ),
                 onTap: () {
-                  // Handle tap event
+                  if (tutorUserId.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TutorScreen(userId: tutorUserId),
+                      ),
+                    );
+                  } else {
+                    print("Tutor user ID is missing or invalid.");
+                  }
                 },
               ),
             ),
@@ -195,10 +215,8 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
           'Current Position: Lat ${position.latitude}, Lng ${position.longitude}');
 
       final testPosition = Position(
-        latitude:
-            13.79079053314057,
-        longitude:
-            121.04230220219588,
+        latitude: 13.79079053314057,
+        longitude: 121.04230220219588,
         timestamp: DateTime.now(),
         accuracy: 5.0,
         altitude: 0.0,
@@ -241,7 +259,12 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
                   'User: ${user['firstName']} ${user['lastName']} is $distance meters away');
 
               if (distance <= 10000) {
-                tempTutors.add(user);
+                // Add userId to the tutor data
+                final tutorWithId = {'userId': key, ...user};
+
+                if (user['account-status'] == 'verified') {
+                  tempTutors.add(tutorWithId);
+                }
               }
             } catch (e) {
               print('Error parsing location for user ${user['firstName']}: $e');
@@ -265,7 +288,7 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
     } catch (e) {
       print('Error searching nearby tutors: $e');
       setState(() {
-        isLoading = false; 
+        isLoading = false;
       });
     }
   }
@@ -304,26 +327,41 @@ class OnlineTutorsTab extends StatefulWidget {
 }
 
 class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
-  final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref('tutors');
-  List<Map<String, dynamic>> allTutors = [];
-  bool isLoading = false; 
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchAllTutors();
-  }
+  final DatabaseReference _databaseRef =
+      FirebaseDatabase.instance.ref('tutors');
+  List<Map<String, dynamic>> onlineTutors = [];
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10),
+          child: Container(
+            height: 40,
+            width: double.infinity,
+            child: TextButton(
+              child: Text("Search Online Tutors",
+                  style: GoogleFonts.indieFlower(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              onPressed: _searchOnlineTutors,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.teal,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ),
         Expanded(
           child: Center(
             child: isLoading
                 ? const CircularProgressIndicator(color: Colors.teal)
-                : allTutors.isEmpty
+                : onlineTutors.isEmpty
                     ? _buildNoTutorsFound()
                     : _buildTutorsList(),
           ),
@@ -342,13 +380,13 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
               width: 100, height: 100),
           const SizedBox(height: 10),
           Text(
-            "No tutors found",
+            "No online tutors found",
             style: GoogleFonts.indieFlower(
                 fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           Text(
-            "Try checking back later.",
+            "Try to tap search again or check back later.",
             textAlign: TextAlign.center,
             style: GoogleFonts.indieFlower(fontSize: 12, color: Colors.black),
           ),
@@ -360,9 +398,11 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
 
   Widget _buildTutorsList() {
     return ListView.builder(
-      itemCount: allTutors.length,
+      itemCount: onlineTutors.length,
       itemBuilder: (context, index) {
-        final tutor = allTutors[index];
+        final tutor = onlineTutors[index];
+        final tutorUserId = tutor['userId']?.toString() ?? '';
+
         return Padding(
           padding: const EdgeInsets.only(left: 10, right: 10),
           child: Card(
@@ -403,7 +443,16 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
                       fontSize: 14, color: Colors.white70),
                 ),
                 onTap: () {
-                  // Handle tap event
+                  if (tutorUserId.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TutorScreen(userId: tutorUserId),
+                      ),
+                    );
+                  } else {
+                    print("Tutor user ID is missing or invalid.");
+                  }
                 },
               ),
             ),
@@ -413,14 +462,13 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
     );
   }
 
-  Future<void> _fetchAllTutors() async {
+  Future<void> _searchOnlineTutors() async {
     setState(() {
       isLoading = true;
     });
 
     try {
       final snapshot = await _databaseRef.once();
-
       if (snapshot.snapshot.value != null) {
         final data = Map<String, dynamic>.from(
             snapshot.snapshot.value as Map<dynamic, dynamic>);
@@ -429,21 +477,24 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
         data.forEach((key, value) {
           final user =
               Map<String, dynamic>.from(value as Map<dynamic, dynamic>);
-          tempTutors.add(user);
+          user['userId'] = key;
+          if (user['account-status'] == 'verified') {
+            tempTutors.add(user);
+          }
         });
 
         setState(() {
-          allTutors = tempTutors;
+          onlineTutors = tempTutors;
           isLoading = false;
         });
       } else {
         setState(() {
-          allTutors = [];
+          onlineTutors = [];
           isLoading = false;
         });
       }
     } catch (e) {
-      print('Error fetching tutors: $e');
+      print('Error searching online tutors: $e');
       setState(() {
         isLoading = false;
       });

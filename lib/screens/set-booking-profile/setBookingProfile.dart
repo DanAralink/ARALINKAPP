@@ -13,20 +13,17 @@ class SetBookingProfile extends StatefulWidget {
 class _SetBookingProfileState extends State<SetBookingProfile> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for text input fields
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _statusController = TextEditingController();
   final TextEditingController _totalHoursController = TextEditingController();
   final TextEditingController _rateController = TextEditingController();
   final TextEditingController _taglineController = TextEditingController();
 
-  // Dropdown values
   String? _selectedDayAvailability;
   String? _selectedSession;
   String? _selectedGradeLevel;
   String? _selectedSubject;
 
-  // Dropdown options
   final List<String> _dayAvailabilityOptions = [
     'Monday',
     'Tuesday',
@@ -51,7 +48,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     'Computer Science'
   ];
 
-  // Flag to indicate if data has been fetched
   bool _isDataFetched = false;
 
   @override
@@ -60,12 +56,11 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     _fetchProfileData();
   }
 
-  // Method to fetch the existing profile data
   void _fetchProfileData() async {
     final User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      final uid = user.uid; // Use the user ID as the identifier
+      final uid = user.uid;
       final DatabaseReference databaseRef =
           FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
 
@@ -90,13 +85,12 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     }
   }
 
-  // Method to save the form data to Firebase
   void _saveBookingProfile() async {
     if (_formKey.currentState!.validate()) {
       final User? user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-        final uid = user.uid; // Use the user ID as the identifier
+        final uid = user.uid;
         final DatabaseReference databaseRef =
             FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
 
@@ -144,7 +138,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // First Row with two columns
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -213,7 +206,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     );
   }
 
-  // Helper method to create text fields
   Widget _buildTextField(String label, TextEditingController controller) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -244,7 +236,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     );
   }
 
-  // Helper method to create dropdown fields
   Widget _buildDropdownField(String label, List<String> options,
       ValueChanged<String?> onChanged, String? selectedValue) {
     return Padding(

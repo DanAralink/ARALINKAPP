@@ -136,6 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: _isLoading ? null : _loginUser,
           style: ElevatedButton.styleFrom(
             shape: const StadiumBorder(),
+            backgroundColor: Colors.teal,
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           child: _isLoading
@@ -143,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
               : Text(
                   "Login",
                   style: GoogleFonts.indieFlower(
-                      color: Colors.black,
+                      color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold),
                 ),
