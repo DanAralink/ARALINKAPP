@@ -259,7 +259,6 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
                   'User: ${user['firstName']} ${user['lastName']} is $distance meters away');
 
               if (distance <= 10000) {
-                // Add userId to the tutor data
                 final tutorWithId = {'userId': key, ...user};
 
                 if (user['account-status'] == 'verified') {

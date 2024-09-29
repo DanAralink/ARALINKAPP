@@ -15,27 +15,22 @@ class MyBookedTutors extends StatefulWidget {
 class _MyBookedTutorsState extends State<MyBookedTutors> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Function to fetch booked tutors and their profiles
   Future<List<Map<String, dynamic>>> _fetchBookedTutors() async {
     String studentId = _auth.currentUser!.uid;
-    print('Student ID: $studentId'); // Debug: Check if student ID is correct
+    print('Student ID: $studentId'); 
 
     DatabaseReference bookingsRef = FirebaseDatabase.instance.ref('Bookings');
 
-    // Get all bookings
     DataSnapshot bookingsSnapshot = await bookingsRef.get();
-    print('Bookings Snapshot: ${bookingsSnapshot.value}'); // Debug: Print bookings snapshot
+    print('Bookings Snapshot: ${bookingsSnapshot.value}');
 
     List<Map<String, dynamic>> bookedTutors = [];
 
     if (bookingsSnapshot.exists) {
-      // Convert to Map<String, dynamic> carefully
       Map<dynamic, dynamic> bookingsMap =
           bookingsSnapshot.value as Map<dynamic, dynamic>;
 
-      // Iterate through each tutor's bookings
       for (var tutorId in bookingsMap.keys) {
-        // Get bookings for each tutor
         Map<dynamic, dynamic>? tutorBookings =
             bookingsMap[tutorId] as Map<dynamic, dynamic>?;
 
@@ -44,9 +39,8 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
               tutorBookings[studentId] as Map<dynamic, dynamic>?;
 
           if (bookingInfo != null && bookingInfo['status'] == 'booked') {
-            print('Booking found for Tutor ID: $tutorId by Student: $studentId'); // Debug
+            print('Booking found for Tutor ID: $tutorId by Student: $studentId');
 
-            // Fetch tutor profile from 'tutor_profiles' node
             DatabaseReference tutorProfileRef =
                 FirebaseDatabase.instance.ref('tutor_profiles/$tutorId');
             DataSnapshot tutorProfileSnapshot = await tutorProfileRef.get();
@@ -55,7 +49,6 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
               Map<dynamic, dynamic> tutorProfile =
                   tutorProfileSnapshot.value as Map<dynamic, dynamic>;
 
-              // Fetch tutor details from 'tutors' node
               DatabaseReference tutorDetailsRef =
                   FirebaseDatabase.instance.ref('tutors/$tutorId');
               DataSnapshot tutorDetailsSnapshot = await tutorDetailsRef.get();
@@ -67,24 +60,24 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
                 bookedTutors.add({
                   'tutorId': tutorId,
                   'profile': Map<String, dynamic>.from(tutorProfile),
-                  'details': Map<String, dynamic>.from(tutorDetails), // Store tutor details
-                  'booking': Map<String, dynamic>.from(bookingInfo!), // Ensure it's a Map<String, dynamic>
+                  'details': Map<String, dynamic>.from(tutorDetails),
+                  'booking': Map<String, dynamic>.from(bookingInfo!),
                 });
               } else {
-                print('No details found for Tutor ID: $tutorId'); // Debug: Tutor details not found
+                print('No details found for Tutor ID: $tutorId');
               }
             } else {
-              print('No profile found for Tutor ID: $tutorId'); // Debug: Tutor profile not found
+              print('No profile found for Tutor ID: $tutorId'); 
             }
           } else {
-            print('No valid booking info for Tutor ID: $tutorId'); // Debug: No booking info found
+            print('No valid booking info for Tutor ID: $tutorId');
           }
         } else {
-          print('No bookings found for Tutor ID: $tutorId or TutorBookings is null'); // Debug
+          print('No bookings found for Tutor ID: $tutorId or TutorBookings is null');
         }
       }
     } else {
-      print('No bookings found'); // Debug: No bookings found
+      print('No bookings found');
     }
 
     return bookedTutors;
@@ -150,7 +143,7 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => LearningMaterialsScreen(
-                              userId: studentId), // Use the correct tutorId
+                              userId: studentId), 
                         ),
                       );
                     },

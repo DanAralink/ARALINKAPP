@@ -16,10 +16,9 @@ class _HomeBookedTuteesState extends State<HomeBookedTutees> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<List<Map<String, dynamic>>> _fetchBookedTutees() async {
-    String tutorId = _auth.currentUser!.uid; // Get current tutor ID
+    String tutorId = _auth.currentUser!.uid; 
     DatabaseReference bookingsRef = FirebaseDatabase.instance.ref('Bookings');
 
-    // Get all bookings
     DataSnapshot bookingsSnapshot = await bookingsRef.get();
 
     List<Map<String, dynamic>> bookedTutees = [];
@@ -28,19 +27,16 @@ class _HomeBookedTuteesState extends State<HomeBookedTutees> {
       Map<dynamic, dynamic> bookingsMap =
           bookingsSnapshot.value as Map<dynamic, dynamic>;
 
-      // Iterate through each tutor's bookings
       if (bookingsMap.containsKey(tutorId)) {
         Map<dynamic, dynamic>? tutorBookings =
             bookingsMap[tutorId] as Map<dynamic, dynamic>?;
 
         if (tutorBookings != null) {
-          // Iterate through each booked tutee
           for (var studentId in tutorBookings.keys) {
             Map<dynamic, dynamic>? bookingInfo =
                 tutorBookings[studentId] as Map<dynamic, dynamic>?;
 
             if (bookingInfo != null && bookingInfo['status'] == 'booked') {
-              // Fetch tutee profile
               DatabaseReference tuteeProfileRef =
                   FirebaseDatabase.instance.ref('users/$studentId');
               DataSnapshot tuteeProfileSnapshot = await tuteeProfileRef.get();
@@ -102,10 +98,10 @@ class _HomeBookedTuteesState extends State<HomeBookedTutees> {
               itemCount: bookedTutees.length,
               itemBuilder: (context, index) {
                 final tutee =
-                    bookedTutees[index]['profile']; // Profile of the tutee
-                final booking = bookedTutees[index]['booking']; // Booking info
+                    bookedTutees[index]['profile']; 
+                final booking = bookedTutees[index]['booking']; 
                 final studentId =
-                    bookedTutees[index]['studentId']; // Get studentId
+                    bookedTutees[index]['studentId']; 
 
                 return Card(
                   elevation: 4,
@@ -136,18 +132,16 @@ class _HomeBookedTuteesState extends State<HomeBookedTutees> {
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      // Check if studentId is not null before navigating
                       if (studentId != null) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => TutorLearningMaterialsScreen(
                                 studentId:
-                                    studentId), // Pass the studentId here
+                                    studentId), 
                           ),
                         );
                       } else {
-                        // Handle the case where studentId is null
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Error: Student ID is missing')),

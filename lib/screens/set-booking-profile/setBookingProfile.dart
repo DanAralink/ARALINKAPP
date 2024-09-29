@@ -48,12 +48,12 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     'Computer Science'
   ];
 
-  bool _isLoading = true; // Track loading state
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchProfileData(); // Fetch profile data when initializing
+    _fetchProfileData();
   }
 
   void _fetchProfileData() async {
@@ -64,14 +64,14 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
       final DatabaseReference databaseRef =
           FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
 
-      print('Fetching profile data for user: $uid'); // Debug log
+      print('Fetching profile data for user: $uid');
 
       try {
         final snapshot = await databaseRef.get();
         if (snapshot.exists) {
           final data = snapshot.value as Map<dynamic, dynamic>;
 
-          print('Profile data retrieved: $data'); // Debug log
+          print('Profile data retrieved: $data');
 
           setState(() {
             _selectedDayAvailability = data['dayAvailability'] as String?;
@@ -83,24 +83,24 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
             _selectedGradeLevel = data['gradeLevel'] as String?;
             _selectedSubject = data['subjects'] as String?;
             _taglineController.text = data['tagline'] as String? ?? '';
-            _isLoading = false; // Data fetched, stop loading
+            _isLoading = false; 
           });
         } else {
-          print('No profile data found for user: $uid'); // Debug log
+          print('No profile data found for user: $uid');
           setState(() {
-            _isLoading = false; // Stop loading even if no data
+            _isLoading = false;
           });
         }
       } catch (error) {
-        print('Error fetching profile data: $error'); // Debug log
+        print('Error fetching profile data: $error');
         setState(() {
-          _isLoading = false; // Stop loading on error
+          _isLoading = false;
         });
       }
     } else {
-      print('No user logged in.'); // Debug log
+      print('No user logged in.');
       setState(() {
-        _isLoading = false; // Stop loading if no user
+        _isLoading = false;
       });
     }
   }
@@ -219,7 +219,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                     const SizedBox(height: 20),
                     Container(
                       width:
-                          double.infinity, // Set the width to double.infinity
+                          double.infinity,
                       child: ElevatedButton(
                         onPressed: _saveBookingProfile,
                         child: Text('Save Profile',

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 
 class TutorLearningMaterialsScreen extends StatefulWidget {
-  final String studentId; // Get the studentId
+  final String studentId;
 
   const TutorLearningMaterialsScreen({required this.studentId, Key? key})
       : super(key: key);
@@ -21,12 +21,10 @@ class _TutorLearningMaterialsScreenState
   @override
   void initState() {
     super.initState();
-    // Fetch learning materials when the screen is initialized
     _learningMaterials = _fetchLearningMaterials();
   }
 
   Future<List<Map<String, dynamic>>> _fetchLearningMaterials() async {
-    // Reference to the learning materials node for the specific student
     DatabaseReference materialsRef =
         FirebaseDatabase.instance.ref('LearningMaterials/${widget.studentId}');
     DataSnapshot materialsSnapshot = await materialsRef.get();
@@ -34,14 +32,13 @@ class _TutorLearningMaterialsScreenState
     List<Map<String, dynamic>> materials = [];
 
     if (materialsSnapshot.exists) {
-      // Convert to Map<String, dynamic>
       Map<dynamic, dynamic> materialsMap =
           materialsSnapshot.value as Map<dynamic, dynamic>;
       materialsMap.forEach((key, value) {
         materials.add({
           'id': key,
-          'fileUrl': value['fileUrl'], // Assuming you have a fileUrl field
-          'description': value['description'], // Add any other fields you want
+          'fileUrl': value['fileUrl'], 
+          'description': value['description'],
         });
       });
     }
@@ -50,8 +47,6 @@ class _TutorLearningMaterialsScreenState
   }
 
   void _addLearningMaterial() {
-    // Logic to upload a new learning material URL
-    // You can implement a dialog to get the URL and description from the user
     showDialog(
       context: context,
       builder: (context) {
@@ -80,19 +75,15 @@ class _TutorLearningMaterialsScreenState
           actions: [
             TextButton(
               onPressed: () async {
-                // Reference to the learning materials node for the specific student
                 DatabaseReference materialsRef = FirebaseDatabase.instance
                     .ref('LearningMaterials/${widget.studentId}');
 
-                // Push new learning material to the database
                 await materialsRef.push().set({
                   'fileUrl': fileUrl,
                   'description': description,
                 });
 
-                // Close the dialog
                 Navigator.of(context).pop();
-                // Refresh the learning materials list
                 setState(() {
                   _learningMaterials = _fetchLearningMaterials();
                 });
@@ -101,7 +92,7 @@ class _TutorLearningMaterialsScreenState
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: Text("Cancel"),
             ),

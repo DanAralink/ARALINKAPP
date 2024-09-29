@@ -35,8 +35,7 @@ class LearningMaterialsScreen extends StatelessWidget {
     if (url != null && await canLaunch(url)) {
       await launch(url);
     } else {
-      // If the URL cannot be launched, fallback to a default web URL
-      const String fallbackUrl = 'https://www.google.com'; // Adjust as necessary
+      const String fallbackUrl = 'https://www.google.com'; 
       if (await canLaunch(fallbackUrl)) {
         await launch(fallbackUrl);
       } else {
