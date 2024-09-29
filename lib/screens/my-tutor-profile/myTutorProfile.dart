@@ -115,17 +115,6 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
               child: ListView(
                 children: [
                   ProfileMenuItem(
-                      icon: Iconsax.user,
-                      text: 'Edit Profile',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const EditTutorProfileScreen()),
-                        );
-                      }),
-                  ProfileMenuItem(
                       icon: Iconsax.message_question,
                       text: 'About',
                       onTap: () {

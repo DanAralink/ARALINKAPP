@@ -84,7 +84,7 @@ class _TabNavigationState extends State<TabNavigation> {
             ],
           ),
           bottomNavigationBar: Padding(
-            padding: const EdgeInsets.only(bottom: 25),
+            padding: const EdgeInsets.only(bottom: 0),
             child: TabBar(
               unselectedLabelColor: Colors.teal[200],
               labelColor: Colors.teal,
@@ -188,7 +188,7 @@ class _TutorTabNavigationState extends State<TutorTabNavigation> {
             ],
           ),
           bottomNavigationBar: Padding(
-            padding: const EdgeInsets.only(bottom: 25),
+            padding: const EdgeInsets.only(bottom: 0),
             child: TabBar(
               unselectedLabelColor: Colors.teal[200],
               labelColor: Colors.teal,

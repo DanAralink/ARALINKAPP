@@ -1,6 +1,7 @@
 import 'package:aralink_app/screens/search-tutors-nearby/locationDetails.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
@@ -10,35 +11,74 @@ class TutorScreen extends StatelessWidget {
 
   TutorScreen({required this.userId});
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<Map<String, dynamic>> _fetchTutorData() async {
-    // Reference to the Firebase Realtime Database
     DatabaseReference tutorsRef =
         FirebaseDatabase.instance.ref('tutors/$userId');
     DatabaseReference tutorProfilesRef =
         FirebaseDatabase.instance.ref('tutor_profiles/$userId');
 
-    // Fetch data from the 'tutors' node
     DataSnapshot tutorsSnapshot = await tutorsRef.get();
     Map<String, dynamic> tutorData = {};
     if (tutorsSnapshot.exists) {
       tutorData = Map<String, dynamic>.from(tutorsSnapshot.value as Map);
     }
-    print('Tutor Data: $tutorData'); // Debugging line
+    print('Tutor Data: $tutorData');
 
-    // Fetch data from the 'tutor_profiles' node
     DataSnapshot tutorProfilesSnapshot = await tutorProfilesRef.get();
     Map<String, dynamic> tutorProfileData = {};
     if (tutorProfilesSnapshot.exists) {
       tutorProfileData =
           Map<String, dynamic>.from(tutorProfilesSnapshot.value as Map);
     }
-    print('Profile Data: $tutorProfileData'); // Debugging line
+    print('Profile Data: $tutorProfileData');
 
-    // Return the data as a map
     return {
       'tutor': tutorData,
       'profile': tutorProfileData,
     };
+  }
+
+  Future<void> _bookTutor(BuildContext context) async {
+    String studentId = _auth.currentUser!.uid;
+
+    bool confirmed = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Booking'),
+          content: const Text('Are you sure you want to book this tutor?'),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text('Book Now'),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      DatabaseReference bookingsRef =
+          FirebaseDatabase.instance.ref('Bookings/$userId/$studentId');
+      await bookingsRef.set({
+        'status': 'booked',
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have successfully booked a tutor!')),
+      );
+    }
   }
 
   @override
@@ -77,164 +117,187 @@ class TutorScreen extends StatelessWidget {
         future: _fetchTutorData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(color: Colors.teal));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
             final tutorData = snapshot.data!['tutor'] ?? {};
             final tutorProfileData = snapshot.data!['profile'] ?? {};
 
-            // Populate UI with the fetched data
-            return ListView(
-              padding: const EdgeInsets.all(10),
+            return Column(
               children: [
-                // COLUMN THAT WILL CONTAIN THE PROFILE
-                Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: NetworkImage(
-                        tutorData['profileImageUrl'] ??
-                            "https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg",
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "${tutorData['firstName'] ?? 'First Name'} ${tutorData['lastName'] ?? 'Last Name'}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(tutorData['email'] ?? 'Email not available'),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // Profile Data Section
-                SizedBox(
-                  height: 180,
-                  child: ListView.separated(
-                    physics: const BouncingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (context, index) {
-                      final card = profileCompletionCards[index];
-                      String value = '';
-                      switch (card.title) {
-                        case "Day Availability":
-                          value = tutorProfileData['dayAvailability'] ?? 'N/A';
-                          break;
-                        case "Preferred Sessions":
-                          value =
-                              tutorProfileData['preferredSessions'] ?? 'N/A';
-                          break;
-                        case "Rate Per Hour":
-                          value = tutorProfileData['ratePerHour'] ?? 'N/A';
-                          break;
-                        case "Total Hours":
-                          value = tutorProfileData['totalHours'] ?? 'N/A';
-                          break;
-                        case "Tutoring Grade Level":
-                          value = tutorProfileData['gradeLevel'] ?? 'N/A';
-                          break;
-                        case "Tutoring Subject":
-                          value = tutorProfileData['subjects'] ?? 'N/A';
-                          break;
-                        default:
-                          value = 'N/A';
-                      }
-                      return SizedBox(
-                        width: 160,
-                        child: Card(
-                          elevation: 2,
-                          shadowColor: Colors.black12,
-                          child: Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  card.icon,
-                                  size: 30,
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  card.title,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const Spacer(),
-                                Text(
-                                  value,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(10),
+                    children: [
+                      Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundImage: NetworkImage(
+                              tutorData['profileImageUrl'] ??
+                                  "https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg",
                             ),
                           ),
-                        ),
-                      );
-                    },
-                    separatorBuilder: (context, index) =>
-                        const Padding(padding: EdgeInsets.only(right: 5)),
-                    itemCount: profileCompletionCards.length,
-                  ),
-                ),
-                const SizedBox(height: 35),
-                // Custom List Tiles Section
-                ...List.generate(
-                  customListTiles.length,
-                  (index) {
-                    final tile = customListTiles[index];
-                    String subtitle = '';
-                    switch (tile.title) {
-                      case "Address":
-                        subtitle = tutorProfileData['address'] ?? 'N/A';
-                        break;
-                      case "Tagline":
-                        subtitle = tutorProfileData['tagline'] ?? 'N/A';
-                        break;
-                      case "Location":
-                        final location = tutorData['location'] ?? {};
-                        final latitude = location['latitude'];
-                        final longitude = location['longitude'];
-                        subtitle =
-                            'Tap to view location';
-                        break;
-                      default:
-                        subtitle = 'N/A';
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 5),
-                      child: Card(
-                        elevation: 4,
-                        shadowColor: Colors.black12,
-                        child: ListTile(
-                          leading: Icon(tile.icon),
-                          title: Text(tile.title),
-                          subtitle: Text(subtitle),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () {
-                            if (tile.title == "Location") {
-                              final location = tutorData['location'] ?? {};
-                              final latitude = (location['latitude'] as double?)
-                                      ?.toString() ??
-                                  'N/A';
-                              final longitude =
-                                  (location['longitude'] as double?)
-                                          ?.toString() ??
-                                      'N/A';
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LocationDetailsScreen(
-                                    latitude: latitude,
-                                    longitude: longitude,
+                          const SizedBox(height: 10),
+                          Text(
+                            "${tutorData['firstName'] ?? 'First Name'} ${tutorData['lastName'] ?? 'Last Name'}",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(tutorData['email'] ?? 'Email not available'),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 180,
+                        child: ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (context, index) {
+                            final card = profileCompletionCards[index];
+                            String value = '';
+                            switch (card.title) {
+                              case "Day Availability":
+                                value = tutorProfileData['dayAvailability'] ??
+                                    'N/A';
+                                break;
+                              case "Preferred Sessions":
+                                value = tutorProfileData['preferredSessions'] ??
+                                    'N/A';
+                                break;
+                              case "Rate Per Hour":
+                                value =
+                                    tutorProfileData['ratePerHour'] ?? 'N/A';
+                                break;
+                              case "Total Hours":
+                                value = tutorProfileData['totalHours'] ?? 'N/A';
+                                break;
+                              case "Tutoring Grade Level":
+                                value = tutorProfileData['gradeLevel'] ?? 'N/A';
+                                break;
+                              case "Tutoring Subject":
+                                value = tutorProfileData['subjects'] ?? 'N/A';
+                                break;
+                              default:
+                                value = 'N/A';
+                            }
+                            return SizedBox(
+                              width: 160,
+                              child: Card(
+                                elevation: 2,
+                                shadowColor: Colors.black12,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(15),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        card.icon,
+                                        size: 30,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        card.title,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        value,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            }
+                              ),
+                            );
                           },
+                          separatorBuilder: (context, index) =>
+                              const Padding(padding: EdgeInsets.only(right: 5)),
+                          itemCount: profileCompletionCards.length,
                         ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 35),
+                      ...List.generate(
+                        customListTiles.length,
+                        (index) {
+                          final tile = customListTiles[index];
+                          String subtitle = '';
+                          switch (tile.title) {
+                            case "Address":
+                              subtitle = tutorProfileData['address'] ?? 'N/A';
+                              break;
+                            case "Tagline":
+                              subtitle = tutorProfileData['tagline'] ?? 'N/A';
+                              break;
+                            case "Location":
+                              subtitle = 'Tap to view location';
+                              break;
+                            default:
+                              subtitle = 'N/A';
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 5),
+                            child: Card(
+                              elevation: 4,
+                              shadowColor: Colors.black12,
+                              child: ListTile(
+                                leading: Icon(tile.icon),
+                                title: Text(tile.title),
+                                subtitle: Text(subtitle),
+                                trailing: const Icon(Icons.chevron_right),
+                                onTap: () {
+                                  if (tile.title == "Location") {
+                                    final location =
+                                        tutorData['location'] ?? {};
+                                    final latitude =
+                                        (location['latitude'] as double?)
+                                                ?.toString() ??
+                                            'N/A';
+                                    final longitude =
+                                        (location['longitude'] as double?)
+                                                ?.toString() ??
+                                            'N/A';
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            LocationDetailsScreen(
+                                          latitude: latitude,
+                                          longitude: longitude,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Container(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _bookTutor(context),
+                      child: Text('Book Now',
+                          style: GoogleFonts.indieFlower(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             );
@@ -263,11 +326,11 @@ List<ProfileCompletionCard> profileCompletionCards = [
   ),
   ProfileCompletionCard(
     title: "Preferred Sessions",
-    icon: Iconsax.timer_1,
+    icon: Iconsax.timer,
   ),
   ProfileCompletionCard(
     title: "Rate Per Hour",
-    icon: Iconsax.diagram,
+    icon: Iconsax.money,
   ),
   ProfileCompletionCard(
     title: "Total Hours",
@@ -275,7 +338,7 @@ List<ProfileCompletionCard> profileCompletionCards = [
   ),
   ProfileCompletionCard(
     title: "Tutoring Grade Level",
-    icon: Iconsax.level,
+    icon: Iconsax.ruler,
   ),
   ProfileCompletionCard(
     title: "Tutoring Subject",
@@ -284,22 +347,22 @@ List<ProfileCompletionCard> profileCompletionCards = [
 ];
 
 class CustomListTile {
-  final IconData icon;
   final String title;
+  final IconData icon;
   CustomListTile({
-    required this.icon,
     required this.title,
+    required this.icon,
   });
 }
 
 List<CustomListTile> customListTiles = [
   CustomListTile(
-    icon: Iconsax.home,
     title: "Address",
+    icon: Iconsax.map_1,
   ),
   CustomListTile(
-    icon: Iconsax.text_italic,
     title: "Tagline",
+    icon: Iconsax.quote_down,
   ),
   CustomListTile(
     title: "Location",

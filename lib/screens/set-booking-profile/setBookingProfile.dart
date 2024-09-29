@@ -48,12 +48,12 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     'Computer Science'
   ];
 
-  bool _isDataFetched = false;
+  bool _isLoading = true; // Track loading state
 
   @override
   void initState() {
     super.initState();
-    _fetchProfileData();
+    _fetchProfileData(); // Fetch profile data when initializing
   }
 
   void _fetchProfileData() async {
@@ -64,24 +64,44 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
       final DatabaseReference databaseRef =
           FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
 
-      final snapshot = await databaseRef.get();
-      if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
+      print('Fetching profile data for user: $uid'); // Debug log
 
+      try {
+        final snapshot = await databaseRef.get();
+        if (snapshot.exists) {
+          final data = snapshot.value as Map<dynamic, dynamic>;
+
+          print('Profile data retrieved: $data'); // Debug log
+
+          setState(() {
+            _selectedDayAvailability = data['dayAvailability'] as String?;
+            _addressController.text = data['address'] as String? ?? '';
+            _statusController.text = data['status'] as String? ?? '';
+            _selectedSession = data['preferredSessions'] as String?;
+            _totalHoursController.text = data['totalHours'] as String? ?? '';
+            _rateController.text = data['ratePerHour'] as String? ?? '';
+            _selectedGradeLevel = data['gradeLevel'] as String?;
+            _selectedSubject = data['subjects'] as String?;
+            _taglineController.text = data['tagline'] as String? ?? '';
+            _isLoading = false; // Data fetched, stop loading
+          });
+        } else {
+          print('No profile data found for user: $uid'); // Debug log
+          setState(() {
+            _isLoading = false; // Stop loading even if no data
+          });
+        }
+      } catch (error) {
+        print('Error fetching profile data: $error'); // Debug log
         setState(() {
-          _selectedDayAvailability = data['dayAvailability'] as String?;
-          _addressController.text = data['address'] as String? ?? '';
-          _statusController.text = data['status'] as String? ?? '';
-          _selectedSession = data['preferredSessions'] as String?;
-          _totalHoursController.text = data['totalHours'] as String? ?? '';
-          _rateController.text = data['ratePerHour'] as String? ?? '';
-          _selectedGradeLevel = data['gradeLevel'] as String?;
-          _selectedSubject = data['subjects'] as String?;
-          _taglineController.text = data['tagline'] as String? ?? '';
-
-          _isDataFetched = true;
+          _isLoading = false; // Stop loading on error
         });
       }
+    } else {
+      print('No user logged in.'); // Debug log
+      setState(() {
+        _isLoading = false; // Stop loading if no user
+      });
     }
   }
 
@@ -132,8 +152,9 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(10.0),
-        child: _isDataFetched
-            ? Form(
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator(color: Colors.teal))
+            : Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,9 +173,10 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                                   _selectedDayAvailability = value;
                                 });
                               }, _selectedDayAvailability),
-                              _buildTextField('Total Hours', _totalHoursController),
-                              _buildDropdownField('Grade Level', _gradeLevelOptions,
-                                  (value) {
+                              _buildTextField(
+                                  'Total Hours', _totalHoursController),
+                              _buildDropdownField(
+                                  'Grade Level', _gradeLevelOptions, (value) {
                                 setState(() {
                                   _selectedGradeLevel = value;
                                 });
@@ -168,7 +190,8 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildDropdownField(
-                                  'Tutoring Sessions', _sessionOptions, (value) {
+                                  'Tutoring Sessions', _sessionOptions,
+                                  (value) {
                                 setState(() {
                                   _selectedSession = value;
                                 });
@@ -194,14 +217,26 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _saveBookingProfile,
-                      child: Text('Save Profile'),
+                    Container(
+                      width:
+                          double.infinity, // Set the width to double.infinity
+                      child: ElevatedButton(
+                        onPressed: _saveBookingProfile,
+                        child: Text('Save Profile',
+                            style: GoogleFonts.indieFlower(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.teal,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-              )
-            : Center(child: CircularProgressIndicator()),
+              ),
       ),
     );
   }
@@ -266,12 +301,12 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
               style: GoogleFonts.indieFlower(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16),
+                  fontSize: 14),
             ),
           );
         }).toList(),
         validator: (value) {
-          if (value == null || value.isEmpty) {
+          if (value == null) {
             return 'Please select $label';
           }
           return null;

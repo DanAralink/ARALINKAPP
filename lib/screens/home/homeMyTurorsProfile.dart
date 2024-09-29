@@ -133,16 +133,6 @@ class _HomeMyTutorsProfileState extends State<HomeMyTutorsProfile> {
               child: ListView(
                 children: [
                   ProfileMenuItem(
-                      icon: Iconsax.user,
-                      text: 'Edit Profile',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => EditTutorProfileScreen()),
-                        );
-                      }),
-                  ProfileMenuItem(
                       icon: Iconsax.message_question,
                       text: 'About',
                       onTap: () {
