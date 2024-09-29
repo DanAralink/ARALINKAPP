@@ -1,4 +1,4 @@
-import 'package:aralink_app/screens/my-booked-tutees/learningMaterials.dart';
+import 'package:aralink_app/screens/my-booked-tutors/learningMaterials.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -92,6 +92,8 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
 
   @override
   Widget build(BuildContext context) {
+    final FirebaseAuth auth = FirebaseAuth.instance;
+    String studentId = auth.currentUser!.uid;
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 240, 183),
       body: FutureBuilder<List<Map<String, dynamic>>>(
@@ -148,7 +150,7 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => LearningMaterialsScreen(
-                              tutorId: bookedTutors[index]['tutorId']), // Use the correct tutorId
+                              userId: studentId), // Use the correct tutorId
                         ),
                       );
                     },
