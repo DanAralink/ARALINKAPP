@@ -39,6 +39,7 @@ class _TutorLearningMaterialsScreenState
           'id': key,
           'fileUrl': value['fileUrl'], 
           'description': value['description'],
+          'status:': 'not verified',
         });
       });
     }

@@ -1,4 +1,5 @@
 import 'package:aralink_app/common/clasessMethods.dart';
+import 'package:aralink_app/screens/authentication/forgotPassword.dart';
 import 'package:aralink_app/screens/authentication/login.dart';
 import 'package:aralink_app/screens/authentication/tutor-register.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -158,7 +159,10 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
   _forgotPassword(context) {
     return TextButton(
       onPressed: () {
-        // Implement forgot password
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+        );
       },
       child: Text(
         "Forgot Password?",

@@ -6,6 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 
 class TutorRegisterScreen extends StatefulWidget {
   @override
@@ -22,10 +26,38 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  LatLng? _userLocation; // To store the selected location
+  LatLng? _userLocation;
+  File? _selectedIdImage;
+  String? _uploadedImageUrl;
+
+  Future<void> _pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedIdImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String?> _uploadImage(File image) async {
+    try {
+      String fileName = path.basename(image.path);
+      Reference ref =
+          FirebaseStorage.instance.ref().child('tutor_ids/$fileName');
+      await ref.putFile(image);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload image')),
+      );
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,6 +224,16 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter a password';
+              } else if (value.length < 8) {
+                return 'Password must be at least 8 characters';
+              } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                return 'Password must contain at least one uppercase letter';
+              } else if (!RegExp(r'[a-z]').hasMatch(value)) {
+                return 'Password must contain at least one lowercase letter';
+              } else if (!RegExp(r'[0-9]').hasMatch(value)) {
+                return 'Password must contain at least one number';
+              } else if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+                return 'Password must contain at least one special character';
               }
               return null;
             },
@@ -271,7 +313,39 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
                 style: const TextStyle(color: Colors.black),
               ),
             ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                children: [
+                  _selectedIdImage != null
+                      ? Image.file(
+                          _selectedIdImage!,
+                          height: 100,
+                        )
+                      : const Icon(
+                          Iconsax.camera,
+                          color: Colors.white,
+                          size: 50,
+                        ),
+                  Text(
+                    "Upload Valid ID",
+                    style: GoogleFonts.indieFlower(
+                      color: Colors.black54,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _isLoading ? null : _registerUser,
             style: ElevatedButton.styleFrom(
@@ -284,9 +358,10 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
                 : Text(
                     "Sign up",
                     style: GoogleFonts.indieFlower(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
           ),
           const SizedBox(height: 30),
@@ -337,12 +412,19 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
       });
 
       try {
+        // Register user with Firebase Auth
         UserCredential userCredential =
             await _auth.createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
+        // Upload image to Firebase Storage if selected
+        if (_selectedIdImage != null) {
+          _uploadedImageUrl = await _uploadImage(_selectedIdImage!);
+        }
+
+        // Save user details in Firebase Realtime Database
         _database.child("tutors/${userCredential.user!.uid}").set({
           "firstName": _firstNameController.text.trim(),
           "lastName": _lastNameController.text.trim(),
@@ -355,6 +437,8 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
                   "longitude": _userLocation!.longitude,
                 }
               : null,
+          "idImageUrl": _uploadedImageUrl,
+          "timestamp": DateTime.now().millisecondsSinceEpoch,
         });
 
         Navigator.pushReplacement(
@@ -363,41 +447,7 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
         );
       } on FirebaseAuthException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/aralink-main-logo.png',
-                  width: 26,
-                  height: 26,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Registration Failed!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Iconsax.warning_25,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ],
-            ),
-            backgroundColor: Colors.teal,
-            duration: const Duration(seconds: 3),
-          ),
+          const SnackBar(content: Text('Registration Failed!')),
         );
       } finally {
         setState(() {

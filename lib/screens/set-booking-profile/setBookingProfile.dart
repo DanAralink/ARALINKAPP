@@ -35,10 +35,8 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
   ];
   final List<String> _sessionOptions = ['Morning', 'Afternoon', 'Evening'];
   final List<String> _gradeLevelOptions = [
+    'Pre-kinder',
     'Elementary',
-    'Middle School',
-    'High School',
-    'College'
   ];
   final List<String> _subjectOptions = [
     'Mathematics',

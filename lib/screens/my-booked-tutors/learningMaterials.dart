@@ -20,11 +20,14 @@ class LearningMaterialsScreen extends StatelessWidget {
       Map<dynamic, dynamic> materialsMap =
           materialsSnapshot.value as Map<dynamic, dynamic>;
       materialsMap.forEach((key, value) {
-        materials.add({
-          'id': key,
-          'fileUrl': value['fileUrl'],
-          'description': value['description'],
-        });
+        String status = value['status'];
+        if (status == 'verified') {
+          materials.add({
+            'id': key,
+            'fileUrl': value['fileUrl'],
+            'description': value['description'],
+          });
+        }
       });
     }
 
@@ -35,7 +38,7 @@ class LearningMaterialsScreen extends StatelessWidget {
     if (url != null && await canLaunch(url)) {
       await launch(url);
     } else {
-      const String fallbackUrl = 'https://www.google.com'; 
+      const String fallbackUrl = 'https://www.google.com';
       if (await canLaunch(fallbackUrl)) {
         await launch(fallbackUrl);
       } else {
@@ -87,7 +90,9 @@ class LearningMaterialsScreen extends StatelessWidget {
                   elevation: 4,
                   margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   child: ListTile(
-                    title: Text(material['description'] ?? 'No description', style: GoogleFonts.indieFlower(fontWeight: FontWeight.bold)),
+                    title: Text(material['description'] ?? 'No description',
+                        style: GoogleFonts.indieFlower(
+                            fontWeight: FontWeight.bold)),
                     onTap: () {
                       // Use the _openUrl method to handle the URL
                       _openUrl(material['fileUrl']);

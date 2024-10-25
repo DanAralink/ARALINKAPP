@@ -25,11 +25,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  LatLng? _userLocation; // To store the selected location
+  LatLng? _userLocation;
 
   @override
   Widget build(BuildContext context) {
-    var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
     return SafeArea(
       child: Scaffold(
@@ -192,6 +191,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter a password';
+              } else if (value.length < 8) {
+                return 'Password must be at least 8 characters';
+              } else if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                return 'Password must contain at least one uppercase letter';
+              } else if (!RegExp(r'[a-z]').hasMatch(value)) {
+                return 'Password must contain at least one lowercase letter';
+              } else if (!RegExp(r'[0-9]').hasMatch(value)) {
+                return 'Password must contain at least one number';
+              } else if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
+                return 'Password must contain at least one special character';
               }
               return null;
             },
@@ -353,13 +362,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   "longitude": _userLocation!.longitude,
                 }
               : null,
+          "timestamp": DateTime.now().millisecondsSinceEpoch,
         });
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
-      } on FirebaseAuthException catch (e) {
+      } on FirebaseAuthException {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
