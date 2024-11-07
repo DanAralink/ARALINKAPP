@@ -3,6 +3,7 @@ import 'package:aralink_app/screens/authentication/forgotPassword.dart';
 import 'package:aralink_app/screens/authentication/register.dart';
 import 'package:aralink_app/screens/authentication/tutor-login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
@@ -239,15 +240,49 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      DatabaseReference databaseRef =
+          FirebaseDatabase.instance.ref().child('users');
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const TabNavigation()),
-      );
+      DataSnapshot snapshot = await databaseRef.get();
+
+      bool userExists = false;
+
+      if (snapshot.exists && snapshot.value != null) {
+        Map<String, dynamic> usersMap =
+            Map<String, dynamic>.from(snapshot.value as Map);
+
+        for (var entry in usersMap.entries) {
+          var userData = Map<String, dynamic>.from(entry.value as Map);
+          if (userData['email'] == _emailController.text.trim()) {
+            userExists = true;
+            break;
+          }
+        }
+      }
+
+      if (userExists) {
+        await _auth.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const TabNavigation()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'The email provided does not exist in the tutees list.',
+              style:
+                  TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

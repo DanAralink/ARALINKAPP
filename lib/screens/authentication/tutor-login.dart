@@ -240,117 +240,85 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
     });
 
     try {
-      // Sign in the user
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      DatabaseReference tutorsRef =
+          FirebaseDatabase.instance.ref().child('tutors');
 
-      User? user = userCredential.user;
+      DataSnapshot snapshot = await tutorsRef.get();
 
-      if (user != null) {
-        // Reference to the tutor's data in the Realtime Database
-        DatabaseReference tutorRef = FirebaseDatabase.instance
-            .ref()
-            .child('tutors')
-            .child(user.uid); // Use user.uid to fetch the specific tutor data
+      bool emailExists = false;
 
-        // Fetch tutor data
-        DatabaseEvent event =
-            await tutorRef.once(); // Once returns a DatabaseEvent
+      if (snapshot.exists) {
+        Map<String, dynamic> tutorsMap =
+            Map<String, dynamic>.from(snapshot.value as Map);
+        for (var entry in tutorsMap.entries) {
+          var tutorData = Map<String, dynamic>.from(entry.value);
+          if (tutorData['email'] == _emailController.text.trim()) {
+            emailExists = true;
+            break;
+          }
+        }
+      }
 
-        // Access the snapshot from the event
-        DataSnapshot snapshot = event.snapshot;
-
-        // Ensure snapshot value is not null and contains the 'account-status' key
-        final tutorData = snapshot.value as Map?;
-
-        if (tutorData != null && tutorData['account-status'] == 'verified') {
-          // Tutor is verified, proceed to the next screen
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const TutorTabNavigation()),
-          );
-        } else {
-          // Show an error message if the tutor is not verified
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/aralink-main-logo.png',
-                    width: 26,
-                    height: 26,
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Your account is not yet verified. Please try again later.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Iconsax.warning_25,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ],
-              ),
-              backgroundColor: Colors.teal,
-              duration: const Duration(seconds: 3),
+      if (!emailExists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'The email provided does not exist in the tutors list.',
+              style:
+                  TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
             ),
-          );
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
 
-          // Optionally, sign out the user since they're not allowed to proceed
-          await _auth.signOut();
+        User? user = userCredential.user;
+
+        if (user != null) {
+          DatabaseReference tutorRef = tutorsRef.child(user.uid);
+
+          DatabaseEvent event = await tutorRef.once();
+          DataSnapshot userSnapshot = event.snapshot;
+
+          final tutorData = userSnapshot.value as Map<dynamic, dynamic>?;
+
+          if (tutorData != null && tutorData['account-status'] == 'verified') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const TutorTabNavigation()),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Your account is not yet verified. Please try again later.',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600, color: Colors.white),
+                ),
+                backgroundColor: Colors.teal,
+                duration: Duration(seconds: 3),
+              ),
+            );
+
+            await _auth.signOut();
+          }
         }
       }
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/aralink-main-logo.png',
-                width: 26,
-                height: 26,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Login Failed!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Iconsax.warning_25,
-                color: Colors.white,
-                size: 20,
-              ),
-            ],
+          content: Text(
+            'Login Failed!',
+            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
           ),
           backgroundColor: Colors.teal,
-          duration: const Duration(seconds: 3),
+          duration: Duration(seconds: 3),
         ),
       );
     } finally {
