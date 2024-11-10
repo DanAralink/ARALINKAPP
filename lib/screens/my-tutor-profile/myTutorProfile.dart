@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:aralink_app/screens/authentication/login.dart';
-import 'package:aralink_app/screens/my-tutor-profile/about.dart';
+import 'package:aralink_app/screens/my-profile/about.dart';
 import 'package:aralink_app/screens/my-tutor-profile/edit-tutor-profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,6 +28,8 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
   String? lastName;
   String? email;
   String? profileImageUrl;
+  String? phoneNumber;
+  String? password;
 
   @override
   void initState() {
@@ -40,12 +42,15 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
       final snapshot = await dbRef.child(tutor!.uid).once();
       if (snapshot.snapshot.value != null) {
         final userData = snapshot.snapshot.value as Map<dynamic, dynamic>?;
+
         setState(() {
           firstName = userData?['firstName'] ?? 'First Name';
           lastName = userData?['lastName'] ?? 'Last Name';
           email = userData?['email'] ?? 'daniel_austin@yourdomain.com';
-          profileImageUrl = userData?['profileImageUrl'] ??
+          profileImageUrl = userData?['idImageUrl'] ??
               'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg';
+          phoneNumber = userData?['phoneNumber'] ?? 'No phone number';
+          password = userData?['password'] ?? 'No password set';
         });
       }
     }
@@ -62,12 +67,43 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
       await storageRef.putFile(file);
       final downloadUrl = await storageRef.getDownloadURL();
 
-      await dbRef.child(tutor!.uid).update({'profileImageUrl': downloadUrl});
+      await dbRef.child(tutor!.uid).update({'idImageUrl': downloadUrl});
       setState(() {
         profileImageUrl = downloadUrl;
       });
     } catch (e) {
       print("Error uploading image: $e");
+    }
+  }
+
+  Future<void> _changePassword(String newPassword) async {
+    try {
+      await tutor!.updatePassword(newPassword);
+      // Optionally update password in your database
+      await dbRef.child(tutor!.uid).update({'password': newPassword});
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Password updated")));
+    } catch (e) {
+      print("Error changing password: $e");
+    }
+  }
+
+  Future<void> _updateProfile(String newFirstName, String newLastName, String newPhoneNumber) async {
+    try {
+      await dbRef.child(tutor!.uid).update({
+        'firstName': newFirstName,
+        'lastName': newLastName,
+        'phoneNumber': newPhoneNumber,
+      });
+
+      setState(() {
+        firstName = newFirstName;
+        lastName = newLastName;
+        phoneNumber = newPhoneNumber;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile updated")));
+    } catch (e) {
+      print("Error updating profile: $e");
     }
   }
 
@@ -88,8 +124,8 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                     onTap: _uploadProfileImage,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(profileImageUrl ??
-                          'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
+                      backgroundImage: NetworkImage(profileImageUrl ?? 
+                        'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -102,6 +138,13 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                   ),
                   Text(
                     email ?? 'Loading...',
+                    style: GoogleFonts.indieFlower(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14),
+                  ),
+                  Text(
+                    phoneNumber ?? 'No phone number',
                     style: GoogleFonts.indieFlower(
                         color: Colors.black54,
                         fontWeight: FontWeight.bold,
@@ -121,9 +164,97 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => AboutTutorScreen()),
+                              builder: (context) => AboutScreen()),
                         );
                       }),
+                  ProfileMenuItem(
+                    icon: Icons.settings,
+                    text: 'Settings',
+                    onTap: () {
+                      // Navigate to settings page for editing profile or password
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Dialog(
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0)),
+                            backgroundColor: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  TextField(
+                                    decoration: InputDecoration(
+                                      labelText: 'First Name',
+                                      hintText: firstName,
+                                    ),
+                                    onChanged: (value) {
+                                      firstName = value;
+                                    },
+                                  ),
+                                  TextField(
+                                    decoration: InputDecoration(
+                                      labelText: 'Last Name',
+                                      hintText: lastName,
+                                    ),
+                                    onChanged: (value) {
+                                      lastName = value;
+                                    },
+                                  ),
+                                  TextField(
+                                    decoration: InputDecoration(
+                                      labelText: 'Phone Number',
+                                      hintText: phoneNumber,
+                                    ),
+                                    onChanged: (value) {
+                                      phoneNumber = value;
+                                    },
+                                  ),
+                                  TextField(
+                                    obscureText: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'New Password',
+                                    ),
+                                    onChanged: (value) {
+                                      password = value;
+                                    },
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      ElevatedButton(
+                                          onPressed: () {
+                                            if (firstName != null &&
+                                                lastName != null &&
+                                                phoneNumber != null) {
+                                              _updateProfile(
+                                                  firstName!,
+                                                  lastName!,
+                                                  phoneNumber!);
+                                            }
+                                            if (password != null) {
+                                              _changePassword(password!);
+                                            }
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text('Save Changes')),
+                                      ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text('Cancel')),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                   ListTile(
                     leading: const Icon(Iconsax.logout, color: Colors.red),
                     title: Text(
@@ -194,17 +325,15 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                         },
                       );
 
-                      if (confirm == true) {
-                        try {
-                          await FirebaseAuth.instance.signOut();
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
-                        } catch (e) {
-                          print('Sign out error: $e');
-                        }
+                      if (confirm ?? false) {
+                        await FirebaseAuth.instance.signOut();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                          (route) => false,
+                        );
                       }
                     },
                   ),
@@ -224,22 +353,18 @@ class ProfileMenuItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const ProfileMenuItem({
-    Key? key,
     required this.icon,
     required this.text,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: Colors.teal),
-      title: Text(
-        text,
-        style: GoogleFonts.indieFlower(
-            color: Colors.black54, fontWeight: FontWeight.bold),
-      ),
       onTap: onTap,
+      leading: Icon(icon),
+      title: Text(text),
+      trailing: const Icon(Icons.arrow_forward_ios),
     );
   }
 }

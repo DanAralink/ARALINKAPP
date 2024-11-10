@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -42,8 +43,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     'Mathematics',
     'Science',
     'English',
-    'History',
-    'Computer Science'
+    'History'
   ];
 
   bool _isLoading = true;
@@ -171,8 +171,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                                   _selectedDayAvailability = value;
                                 });
                               }, _selectedDayAvailability),
-                              _buildTextField(
-                                  'Total Hours', _totalHoursController),
+                              _buildTextField('Total Hours', _totalHoursController, isNumber: true),
                               _buildDropdownField(
                                   'Grade Level', _gradeLevelOptions, (value) {
                                 setState(() {
@@ -194,7 +193,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                                   _selectedSession = value;
                                 });
                               }, _selectedSession),
-                              _buildTextField('Rate/Hour', _rateController),
+                              _buildTextField('Rate/Hour', _rateController, isNumber: true),
                               _buildDropdownField('Subject', _subjectOptions,
                                   (value) {
                                 setState(() {
@@ -239,35 +238,38 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.indieFlower(
-              color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: Colors.teal, width: 1.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: Colors.teal, width: 2),
-          ),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.2),
+  Widget _buildTextField(String label, TextEditingController controller, {bool isNumber = false}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8.0),
+    child: TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.indieFlower(
+            color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: Colors.teal, width: 1.5),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter $label';
-          }
-          return null;
-        },
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: Colors.teal, width: 2),
+        ),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.2),
       ),
-    );
-  }
+      inputFormatters: isNumber
+          ? [FilteringTextInputFormatter.digitsOnly] // Only allow digits for number fields
+          : [],
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        return null;
+      },
+    ),
+  );
+}
 
   Widget _buildDropdownField(String label, List<String> options,
       ValueChanged<String?> onChanged, String? selectedValue) {
