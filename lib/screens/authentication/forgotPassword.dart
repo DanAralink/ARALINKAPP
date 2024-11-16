@@ -1,98 +1,56 @@
-import 'package:aralink_app/screens/authentication/OTPVerification.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server.dart';
-import 'dart:math';
 
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({Key? key}) : super(key: key);
+
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final TextEditingController emailController = TextEditingController();
-  bool _isLoading = false;
-  String generatedOTP = '';
+  final TextEditingController _emailController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> _sendOTP(String email) async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Center(child: Text('Please enter your email address')),
+            backgroundColor: Colors.red),
+      );
+      return;
+    }
 
     try {
-      List<String> signInMethods =
-          await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
-
-      if (signInMethods.isNotEmpty) {
-        final random = Random();
-        generatedOTP = (random.nextInt(900000) + 100000).toString();
-
-        String username = 'capstonearalink@gmail.com';
-        String password = 'rctk whhh ewae tnxv';
-
-        final smtpServer = gmail(username, password);
-        final message = Message()
-          ..from = Address(username, 'Aralink')
-          ..recipients.add(email)
-          ..subject = 'Password Reset OTP'
-          ..text = 'Your OTP for password reset is: $generatedOTP';
-
-        try {
-          await send(message, smtpServer);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('OTP sent to $email'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OTPVerificationScreen(
-                email: email,
-                sentOTP: generatedOTP,
-              ),
-            ),
-          );
-        } on MailerException {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to send OTP. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
-        // If the email is not registered
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('This email is not registered.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
+      await _auth.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Center(child: Text('Password reset email sent!')),
+            backgroundColor: Colors.green),
+      );
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error occurred: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: ${e.toString()}')),
       );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color.fromARGB(255, 255, 240, 183),
       appBar: AppBar(
         leading: GestureDetector(
           onTap: () {
@@ -115,86 +73,60 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Image.asset(
-                'assets/images/aralink-logo.png',
-                height: 120,
-              ),
+            Image.asset(
+              "assets/images/aralink-logo.png",
+              height: 150,
+              width: 150,
             ),
-            SizedBox(height: 30),
             Text(
-              'Forgot Password',
+              "Forgot Password",
               style: GoogleFonts.indieFlower(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.teal,
+                color: Colors.black,
               ),
             ),
-            SizedBox(height: 20),
-            TextField(
-              cursorColor: Color.fromARGB(255, 255, 240, 183),
-              controller: emailController,
+            Text(
+              "Enter your email to reset your password.",
+              style: GoogleFonts.indieFlower(
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            TextFormField(
+              style: TextStyle(color: Colors.white),
+              controller: _emailController,
+              cursorColor: Colors.white,
               decoration: InputDecoration(
-                prefixIcon: Icon(Iconsax.sms),
-                hintText: 'Email address',
+                hintStyle: const TextStyle(color: Colors.black54),
+                hintText: "Email",
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: Color.fromARGB(255, 255, 240, 183),
-                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: Color.fromARGB(255, 255, 240, 183),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: Color.fromARGB(255, 255, 240, 183),
-                    width: 2.0,
-                  ),
+                fillColor: Colors.black.withOpacity(0.4),
+                filled: true,
+                prefixIcon: const Icon(
+                  Iconsax.sms,
+                  color: Colors.white,
                 ),
               ),
-              keyboardType: TextInputType.emailAddress,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20.0),
             ElevatedButton(
-              onPressed: _isLoading
-                  ? null
-                  : () {
-                      final email = emailController.text.trim();
-                      if (email.isNotEmpty) {
-                        _sendOTP(email);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Please enter a valid email!'),
-                            backgroundColor: Colors.orange,
-                          ),
-                        );
-                      }
-                    },
-              child: _isLoading
-                  ? CircularProgressIndicator()
-                  : Text(
-                      'Send OTP',
-                      style:
-                          GoogleFonts.indieFlower(fontSize: 16, color: Colors.teal),
-                    ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 255, 240, 183),
-                minimumSize: Size(double.infinity, 50),
-                textStyle:
-                    GoogleFonts.indieFlower(fontSize: 16, color: Colors.white),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                backgroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+              ),
+              onPressed: _resetPassword,
+              child: Text(
+                'Send',
+                style: GoogleFonts.indieFlower(
+                  color: Colors.black,
                 ),
               ),
             ),
-            SizedBox(height: 120),
+            const SizedBox(height: 46.0),
           ],
         ),
       ),

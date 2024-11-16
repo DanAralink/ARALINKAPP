@@ -27,24 +27,33 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
   Widget build(BuildContext context) {
     height = MediaQuery.of(context).size.height;
     width = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
         resizeToAvoidBottomInset: true,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              const SizedBox(height: 20),
-              _header(context),
-              _inputField(context),
-              _forgotPassword(context),
-              _signup(context),
-              _signupTutee(context),
-            ],
-          ),
+        body: Column(
+          children: [
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _header(context),
+                    const SizedBox(height: 20),
+                    _inputField(context),
+                    _forgotPassword(context),
+                    const SizedBox(height: 20),
+                    _signup(context),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            _signupTutee(context),
+          ],
         ),
       ),
     );
@@ -261,7 +270,7 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
 
       if (!emailExists) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
               'The email provided does not exist in the tutors list.',
               style:
@@ -295,7 +304,7 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+              const SnackBar(
                 content: Text(
                   'Your account is not yet verified. Please try again later.',
                   style: TextStyle(
@@ -310,9 +319,9 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
           }
         }
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             'Login Failed!',
             style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),

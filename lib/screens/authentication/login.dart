@@ -27,24 +27,33 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     height = MediaQuery.of(context).size.height;
     width = MediaQuery.of(context).size.width;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
         resizeToAvoidBottomInset: true,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              const SizedBox(height: 20),
-              _header(context),
-              _inputField(context),
-              _forgotPassword(context),
-              _signup(context),
-              _signupTutor(context),
-            ],
-          ),
+        body: Column(
+          children: [
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _header(context),
+                    const SizedBox(height: 20),
+                    _inputField(context),
+                    _forgotPassword(context),
+                    const SizedBox(height: 20),
+                    _signup(context),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            _signupTutor(context),
+          ],
         ),
       ),
     );
@@ -240,85 +249,51 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      DatabaseReference databaseRef =
-          FirebaseDatabase.instance.ref().child('users');
+      // Sign in the user
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      DataSnapshot snapshot = await databaseRef.get();
+      User? user = userCredential.user;
 
-      bool userExists = false;
+      if (user != null) {
+        await user.reload(); 
+        if (user.emailVerified) {
+          DatabaseReference userRef =
+              FirebaseDatabase.instance.ref().child('users').child(user.uid);
 
-      if (snapshot.exists && snapshot.value != null) {
-        Map<String, dynamic> usersMap =
-            Map<String, dynamic>.from(snapshot.value as Map);
+          await userRef.update({'verified': true});
 
-        for (var entry in usersMap.entries) {
-          var userData = Map<String, dynamic>.from(entry.value as Map);
-          if (userData['email'] == _emailController.text.trim()) {
-            userExists = true;
-            break;
-          }
-        }
-      }
-
-      if (userExists) {
-        await _auth.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const TabNavigation()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'The email provided does not exist in the tutees list.',
-              style:
-                  TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TabNavigation()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Your email is not verified. Please verify your email to log in.',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
             ),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
+          );
+          _auth.signOut(); // Sign out the user if not verified
+        }
       }
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/aralink-main-logo.png',
-                width: 26,
-                height: 26,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Login Failed!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Iconsax.warning_25,
-                color: Colors.white,
-                size: 20,
-              ),
-            ],
+          content: Text(
+            'Login Failed: ${e.message}',
+            style: const TextStyle(
+                fontWeight: FontWeight.w600, color: Colors.white),
           ),
-          backgroundColor: Colors.teal,
-          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
       );
     } finally {

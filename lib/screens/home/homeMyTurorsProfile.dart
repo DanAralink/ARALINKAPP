@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:aralink_app/screens/authentication/tutor-login.dart';
 import 'package:aralink_app/screens/my-tutor-profile/about.dart';
-import 'package:aralink_app/screens/my-tutor-profile/edit-tutor-profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
