@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:iconsax/iconsax.dart';
 
 class ChatBoxScreen extends StatefulWidget {
   final String bookingId;
@@ -97,6 +98,14 @@ class _ChatBoxScreenState extends State<ChatBoxScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: GestureDetector(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: const Icon(
+            Iconsax.arrow_left_2,
+          ),
+        ),
         title: Text("Chat"),
         backgroundColor: Colors.teal,
       ),

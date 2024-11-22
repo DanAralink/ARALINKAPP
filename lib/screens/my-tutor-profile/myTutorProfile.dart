@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:aralink_app/screens/authentication/login.dart';
 import 'package:aralink_app/screens/my-profile/about.dart';
-import 'package:aralink_app/screens/my-tutor-profile/edit-tutor-profile.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -28,7 +27,6 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
   String? lastName;
   String? email;
   String? profileImageUrl;
-  String? phoneNumber;
   String? password;
 
   @override
@@ -49,7 +47,6 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
           email = userData?['email'] ?? 'daniel_austin@yourdomain.com';
           profileImageUrl = userData?['idImageUrl'] ??
               'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg';
-          phoneNumber = userData?['phoneNumber'] ?? 'No phone number';
           password = userData?['password'] ?? 'No password set';
         });
       }
@@ -81,27 +78,27 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
       await tutor!.updatePassword(newPassword);
       // Optionally update password in your database
       await dbRef.child(tutor!.uid).update({'password': newPassword});
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Password updated")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Password updated")));
     } catch (e) {
       print("Error changing password: $e");
     }
   }
 
-  Future<void> _updateProfile(String newFirstName, String newLastName, String newPhoneNumber) async {
+  Future<void> _updateProfile(String newFirstName, String newLastName) async {
     try {
       await dbRef.child(tutor!.uid).update({
         'firstName': newFirstName,
         'lastName': newLastName,
-        'phoneNumber': newPhoneNumber,
       });
 
       setState(() {
         firstName = newFirstName;
         lastName = newLastName;
-        phoneNumber = newPhoneNumber;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Profile updated")));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Profile updated")));
     } catch (e) {
       print("Error updating profile: $e");
     }
@@ -124,8 +121,8 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                     onTap: _uploadProfileImage,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: NetworkImage(profileImageUrl ?? 
-                        'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
+                      backgroundImage: NetworkImage(profileImageUrl ??
+                          'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2247726673.jpg'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -138,13 +135,6 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                   ),
                   Text(
                     email ?? 'Loading...',
-                    style: GoogleFonts.indieFlower(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14),
-                  ),
-                  Text(
-                    phoneNumber ?? 'No phone number',
                     style: GoogleFonts.indieFlower(
                         color: Colors.black54,
                         fontWeight: FontWeight.bold,
@@ -168,10 +158,9 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                         );
                       }),
                   ProfileMenuItem(
-                    icon: Icons.settings,
+                    icon: Iconsax.setting,
                     text: 'Settings',
                     onTap: () {
-                      // Navigate to settings page for editing profile or password
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -203,15 +192,6 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                                     },
                                   ),
                                   TextField(
-                                    decoration: InputDecoration(
-                                      labelText: 'Phone Number',
-                                      hintText: phoneNumber,
-                                    ),
-                                    onChanged: (value) {
-                                      phoneNumber = value;
-                                    },
-                                  ),
-                                  TextField(
                                     obscureText: true,
                                     decoration: InputDecoration(
                                       labelText: 'New Password',
@@ -227,12 +207,9 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                                       ElevatedButton(
                                           onPressed: () {
                                             if (firstName != null &&
-                                                lastName != null &&
-                                                phoneNumber != null) {
+                                                lastName != null) {
                                               _updateProfile(
-                                                  firstName!,
-                                                  lastName!,
-                                                  phoneNumber!);
+                                                  firstName!, lastName!);
                                             }
                                             if (password != null) {
                                               _changePassword(password!);
@@ -363,8 +340,12 @@ class ProfileMenuItem extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: Icon(icon),
-      title: Text(text),
-      trailing: const Icon(Icons.arrow_forward_ios),
+      title: Text(
+        text,
+        style: GoogleFonts.indieFlower(
+            color: Colors.black54, fontWeight: FontWeight.bold),
+      ),
+      trailing: const Icon(Iconsax.arrow_right),
     );
   }
 }

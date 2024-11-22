@@ -2,6 +2,7 @@ import 'package:aralink_app/common/map_screen.dart';
 import 'package:aralink_app/screens/authentication/login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
@@ -620,6 +621,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         // Send email verification
         await userCredential.user!.sendEmailVerification();
+        
+        String? fcmToken = await FirebaseMessaging.instance.getToken();
 
         // Save user data in the database
         _database.child("users/${userCredential.user!.uid}").set({
@@ -633,6 +636,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 }
               : null,
           "timestamp": DateTime.now().millisecondsSinceEpoch,
+          "fcmToken": fcmToken,
         });
 
         // Notify user to verify their email

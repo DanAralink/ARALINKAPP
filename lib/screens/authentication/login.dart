@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         TextButton(
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => RegisterScreen()),
             );
@@ -226,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         TextButton(
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const TutorLoginScreen()),
             );
@@ -284,13 +284,15 @@ class _LoginScreenState extends State<LoginScreen> {
           _auth.signOut(); // Sign out the user if not verified
         }
       }
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Login Failed: ${e.message}',
-            style: const TextStyle(
-                fontWeight: FontWeight.w600, color: Colors.white),
+          content: Center(
+            child: Text(
+              'Invalid email or password!',
+              style: const TextStyle(
+                  fontWeight: FontWeight.w600, color: Colors.white),
+            ),
           ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),

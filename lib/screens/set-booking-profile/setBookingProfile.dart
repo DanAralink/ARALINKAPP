@@ -15,13 +15,12 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _statusController = TextEditingController();
   final TextEditingController _totalHoursController = TextEditingController();
   final TextEditingController _rateController = TextEditingController();
   final TextEditingController _taglineController = TextEditingController();
 
-  String? _selectedDayAvailability;
-  String? _selectedSession;
+  List<String> _selectedDayAvailability = [];
+  List<String> _selectedSessions = [];
   String? _selectedGradeLevel;
   String? _selectedSubject;
 
@@ -37,7 +36,12 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
   final List<String> _sessionOptions = ['Morning', 'Afternoon', 'Evening'];
   final List<String> _gradeLevelOptions = [
     'Pre-kinder',
-    'Elementary',
+    'Grade I',
+    'Grade II',
+    'Grade III',
+    'Grade IV',
+    'Grade V',
+    'Grade VI',
   ];
   final List<String> _subjectOptions = [
     'Mathematics',
@@ -62,29 +66,25 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
       final DatabaseReference databaseRef =
           FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
 
-      print('Fetching profile data for user: $uid');
-
       try {
         final snapshot = await databaseRef.get();
         if (snapshot.exists) {
           final data = snapshot.value as Map<dynamic, dynamic>;
 
-          print('Profile data retrieved: $data');
-
           setState(() {
-            _selectedDayAvailability = data['dayAvailability'] as String?;
+            _selectedDayAvailability =
+                (data['dayAvailability'] as String?)?.split(', ') ?? [];
+            _selectedSessions =
+                (data['preferredSessions'] as String?)?.split(', ') ?? [];
             _addressController.text = data['address'] as String? ?? '';
-            _statusController.text = data['status'] as String? ?? '';
-            _selectedSession = data['preferredSessions'] as String?;
             _totalHoursController.text = data['totalHours'] as String? ?? '';
             _rateController.text = data['ratePerHour'] as String? ?? '';
             _selectedGradeLevel = data['gradeLevel'] as String?;
             _selectedSubject = data['subjects'] as String?;
             _taglineController.text = data['tagline'] as String? ?? '';
-            _isLoading = false; 
+            _isLoading = false;
           });
         } else {
-          print('No profile data found for user: $uid');
           setState(() {
             _isLoading = false;
           });
@@ -96,7 +96,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
         });
       }
     } else {
-      print('No user logged in.');
       setState(() {
         _isLoading = false;
       });
@@ -113,10 +112,9 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
             FirebaseDatabase.instance.ref().child('tutor_profiles').child(uid);
 
         await databaseRef.set({
-          'dayAvailability': _selectedDayAvailability,
+          'dayAvailability': _selectedDayAvailability.join(', '),
           'address': _addressController.text,
-          'status': _statusController.text,
-          'preferredSessions': _selectedSession,
+          'preferredSessions': _selectedSessions.join(', '),
           'totalHours': _totalHoursController.text,
           'ratePerHour': _rateController.text,
           'gradeLevel': _selectedGradeLevel,
@@ -157,66 +155,53 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildMultiSelectField(
+                        'Day Availability', _dayAvailabilityOptions, (value) {
+                      setState(() {
+                        _selectedDayAvailability = value;
+                      });
+                    }, _selectedDayAvailability),
+                    const SizedBox(height: 20),
+                    _buildMultiSelectField('Tutoring Sessions', _sessionOptions,
+                        (value) {
+                      setState(() {
+                        _selectedSessions = value;
+                      });
+                    }, _selectedSessions),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildDropdownField(
-                                  'Day Availability', _dayAvailabilityOptions,
-                                  (value) {
-                                setState(() {
-                                  _selectedDayAvailability = value;
-                                });
-                              }, _selectedDayAvailability),
-                              _buildTextField('Total Hours', _totalHoursController, isNumber: true),
-                              _buildDropdownField(
-                                  'Grade Level', _gradeLevelOptions, (value) {
-                                setState(() {
-                                  _selectedGradeLevel = value;
-                                });
-                              }, _selectedGradeLevel),
-                            ],
-                          ),
+                          child: _buildTextField(
+                              'Total Hours', _totalHoursController,
+                              isNumber: true),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(
+                            width: 10), 
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildDropdownField(
-                                  'Tutoring Sessions', _sessionOptions,
-                                  (value) {
-                                setState(() {
-                                  _selectedSession = value;
-                                });
-                              }, _selectedSession),
-                              _buildTextField('Rate/Hour', _rateController, isNumber: true),
-                              _buildDropdownField('Subject', _subjectOptions,
-                                  (value) {
-                                setState(() {
-                                  _selectedSubject = value;
-                                });
-                              }, _selectedSubject),
-                            ],
-                          ),
+                          child: _buildTextField(
+                              'Rate per Hour', _rateController,
+                              isNumber: true),
                         ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTextField('Status', _statusController),
-                        _buildTextField('Address', _addressController),
-                        _buildTextField('Tagline', _taglineController),
-                      ],
-                    ),
+                    _buildDropdownField('Grade Level', _gradeLevelOptions,
+                        (value) {
+                      setState(() {
+                        _selectedGradeLevel = value;
+                      });
+                    }, _selectedGradeLevel),
+                    _buildDropdownField('Subject', _subjectOptions, (value) {
+                      setState(() {
+                        _selectedSubject = value;
+                      });
+                    }, _selectedSubject),
+                    _buildTextField('Address', _addressController),
+                    _buildTextField('Tagline', _taglineController),
                     const SizedBox(height: 20),
                     Container(
-                      width:
-                          double.infinity,
+                      width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _saveBookingProfile,
                         child: Text('Save Profile',
@@ -238,38 +223,46 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool isNumber = false}) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: GoogleFonts.indieFlower(
-            color: Colors.teal, fontWeight: FontWeight.bold, fontSize: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: Colors.teal, width: 1.5),
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.indieFlower(
+            color: Colors.teal,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.teal, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.teal, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.2),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(color: Colors.teal, width: 2),
+        style: GoogleFonts.indieFlower(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
         ),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.2),
+        inputFormatters:
+            isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter $label';
+          }
+          return null;
+        },
       ),
-      inputFormatters: isNumber
-          ? [FilteringTextInputFormatter.digitsOnly] // Only allow digits for number fields
-          : [],
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        return null;
-      },
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildDropdownField(String label, List<String> options,
       ValueChanged<String?> onChanged, String? selectedValue) {
@@ -301,7 +294,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
               style: GoogleFonts.indieFlower(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14),
+                  fontSize: 16),
             ),
           );
         }).toList(),
@@ -312,6 +305,46 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
           return null;
         },
       ),
+    );
+  }
+
+  Widget _buildMultiSelectField(String label, List<String> options,
+      ValueChanged<List<String>> onChanged, List<String> selectedValues) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: GoogleFonts.indieFlower(
+                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
+        Wrap(
+          spacing: 10,
+          children: options.map((option) {
+            final bool isSelected = selectedValues.contains(option);
+            return ChoiceChip(
+              label: Text(
+                option,
+                style: GoogleFonts.indieFlower(
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : Colors.teal,
+                ),
+              ),
+              selected: isSelected,
+              onSelected: (isSelected) {
+                setState(() {
+                  if (isSelected) {
+                    selectedValues.add(option);
+                  } else {
+                    selectedValues.remove(option);
+                  }
+                  onChanged(selectedValues);
+                });
+              },
+              selectedColor: Colors.teal,
+              backgroundColor: Colors.grey[200],
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

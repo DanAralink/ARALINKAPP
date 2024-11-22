@@ -28,6 +28,12 @@ dependencies:
   shared_preferences: ^2.3.2
   smooth_page_indicator: ^1.2.0+3
   url_launcher: ^6.3.0
+  firebase_analytics: ^11.3.5
+  pointycastle: ^3.9.1
+  googleapis_auth: ^1.6.0
+  flutter_inappwebview: ^5.8.0
+  flutter_web_browser: ^0.17.1
+  flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
   flutter_test:
@@ -39,3 +45,4 @@ flutter:
   assets:
     - assets/images/
     - assets/videos/
+    - assets/aralink-d9c4c-87ed3286d716.json

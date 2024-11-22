@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_web_browser/flutter_web_browser.dart';
 
 class LearningMaterialsScreen extends StatelessWidget {
   final String userId;
@@ -21,7 +21,7 @@ class LearningMaterialsScreen extends StatelessWidget {
           materialsSnapshot.value as Map<dynamic, dynamic>;
       materialsMap.forEach((key, value) {
         String status = value['status'];
-        if (status == 'verified') {
+        if (status == 'Approved') {
           materials.add({
             'id': key,
             'fileUrl': value['fileUrl'],
@@ -34,16 +34,31 @@ class LearningMaterialsScreen extends StatelessWidget {
     return materials;
   }
 
-  Future<void> _openUrl(String? url) async {
-    if (url != null && await canLaunch(url)) {
-      await launch(url);
+  Future<void> _openUrl(String? urli) async {
+    if (urli != null) {
+      // Use FlutterWebBrowser to open the URL
+      FlutterWebBrowser.openWebPage(
+        url: urli,
+        customTabsOptions: const CustomTabsOptions(
+          colorScheme: CustomTabsColorScheme.dark,
+          toolbarColor: Colors.deepPurple,
+          secondaryToolbarColor: Colors.green,
+          navigationBarColor: Colors.amber,
+          shareState: CustomTabsShareState.on,
+          instantAppsEnabled: true,
+          showTitle: true,
+          urlBarHidingEnabled: true,
+        ),
+        safariVCOptions: const SafariViewControllerOptions(
+          barCollapsingEnabled: true,
+          preferredBarTintColor: Colors.green,
+          preferredControlTintColor: Colors.amber,
+          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
+          modalPresentationCapturesStatusBarAppearance: true,
+        ),
+      );
     } else {
-      const String fallbackUrl = 'https://www.google.com';
-      if (await canLaunch(fallbackUrl)) {
-        await launch(fallbackUrl);
-      } else {
-        print('Could not launch: $url');
-      }
+      print("URL is null, cannot launch");
     }
   }
 
@@ -68,17 +83,42 @@ class LearningMaterialsScreen extends StatelessWidget {
               fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
         ),
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
+      body: FutureBuilder<List<Map<String, dynamic>>>( 
         future: _fetchLearningMaterials(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator(color: Colors.teal));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
             final materials = snapshot.data!;
             if (materials.isEmpty) {
-              return Center(child: Text('No learning materials available.'));
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/images/aralink-main-logo.png',
+                          width: 100, height: 100),
+                      const SizedBox(height: 10),
+                      Text(
+                        "No learning materials available yet.",
+                        style: GoogleFonts.indieFlower(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Please wait for your tutor to publish your learning material.",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.indieFlower(
+                            fontSize: 14, color: Colors.black),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              );
             }
 
             return ListView.builder(
@@ -90,11 +130,14 @@ class LearningMaterialsScreen extends StatelessWidget {
                   elevation: 4,
                   margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   child: ListTile(
+                    leading: Icon(Iconsax.link),
                     title: Text(material['description'] ?? 'No description',
-                        style: GoogleFonts.indieFlower(
-                            fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.teal)),
+                    subtitle: Text("Tap here to view",
+                        style: TextStyle(color: Colors.grey)),
                     onTap: () {
-                      // Use the _openUrl method to handle the URL
+                      // Open the URL using FlutterWebBrowser
                       _openUrl(material['fileUrl']);
                     },
                   ),

@@ -1,10 +1,15 @@
+import 'dart:convert';
 import 'package:aralink_app/screens/search-tutors-nearby/locationDetails.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:googleapis_auth/auth_io.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:http/http.dart' as http;
+import 'package:googleapis_auth/googleapis_auth.dart';
 
 class TutorScreen extends StatelessWidget {
   final String userId;
@@ -57,6 +62,11 @@ class TutorScreen extends StatelessWidget {
               },
             ),
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+                minimumSize: const Size(100, 40),
+              ),
               child: const Text('Book Now'),
               onPressed: () {
                 Navigator.of(context).pop(true);
@@ -68,16 +78,138 @@ class TutorScreen extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      DatabaseReference bookingsRef =
-          FirebaseDatabase.instance.ref('Bookings/$userId/$studentId');
-      await bookingsRef.set({
-        'status': 'booked',
-        'timestamp': DateTime.now().toIso8601String(),
-      });
+      try {
+        DatabaseReference tutorRef =
+            FirebaseDatabase.instance.ref('tutors/$userId');
+        DataSnapshot tutorSnapshot = await tutorRef.get();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You have successfully booked a tutor!')),
+        if (!tutorSnapshot.exists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: Tutor data not found.')),
+          );
+          return;
+        }
+
+        Map<String, dynamic> tutorData =
+            Map<String, dynamic>.from(tutorSnapshot.value as Map);
+        String tutorFcmToken = tutorData['fcmToken'] ?? '';
+
+        DatabaseReference tuteeRef =
+            FirebaseDatabase.instance.ref('users/$studentId');
+        DataSnapshot tuteeSnapshot = await tuteeRef.get();
+
+        if (!tuteeSnapshot.exists) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error: Tutee data not found.')),
+          );
+          return;
+        }
+
+        Map<String, dynamic> tuteeData =
+            Map<String, dynamic>.from(tuteeSnapshot.value as Map);
+        String tuteeFcmToken = tuteeData['fcmToken'] ?? '';
+
+        DatabaseReference bookingsRef =
+            FirebaseDatabase.instance.ref('Bookings/$userId/$studentId');
+
+        await bookingsRef.set({
+          'isRequestingCancel': false,
+          'status': 'Pending',
+          'timestamp': DateTime.now().toIso8601String(),
+          'tutor_id': userId,
+          'tutee_id': studentId,
+          'tutor_fcmToken': tutorFcmToken,
+          'tutee_fcmToken': tuteeFcmToken,
+        });
+
+        await _sendPushNotification(
+          tutorFcmToken: tutorFcmToken,
+          title: "New Booking Request!",
+          body:
+              "You have a new booking request from tutee: ${tuteeData['firstName']} ${tuteeData['lastName']}.",
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Center(child: Text('You have successfully booked a tutor!')),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        // Handle errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error booking tutor: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendPushNotification({
+    required String tutorFcmToken,
+    required String title,
+    required String body,
+  }) async {
+    const String projectId = 'aralink-d9c4c';
+    final String url =
+        'https://fcm.googleapis.com/v1/projects/$projectId/messages:send';
+
+    try {
+      String accessToken = await _getAccessToken();
+
+      final Map<String, dynamic> message = {
+        'message': {
+          'token': tutorFcmToken,
+          'notification': {
+            'title': title,
+            'body': body,
+          },
+          'data': {
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'status': 'new',
+          },
+        },
+      };
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(message),
       );
+
+      if (response.statusCode == 200) {
+        print('Push notification sent successfully.');
+      } else {
+        print('Failed to send push notification: ${response.body}');
+      }
+    } catch (e) {
+      print('Error sending push notification: $e');
+    }
+  }
+
+  Future<String> _getAccessToken() async {
+    try {
+      final serviceAccountKey =
+          await rootBundle.loadString('assets/aralink-d9c4c-87ed3286d716.json');
+
+      final Map<String, dynamic> keyData = jsonDecode(serviceAccountKey);
+
+      final accountCredentials = ServiceAccountCredentials.fromJson(keyData);
+
+      const List<String> scopes = [
+        'https://www.googleapis.com/auth/cloud-platform',
+      ];
+
+      final client = await clientViaServiceAccount(accountCredentials, scopes);
+
+      final accessToken = client.credentials.accessToken;
+
+      return accessToken.data;
+    } catch (e) {
+      throw Exception('Error getting access token: $e');
     }
   }
 

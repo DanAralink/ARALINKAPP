@@ -196,7 +196,7 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
         ),
         TextButton(
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => TutorRegisterScreen()),
             );
@@ -226,7 +226,7 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
         ),
         TextButton(
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const LoginScreen()),
             );
@@ -322,11 +322,13 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
     } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Login Failed!',
-            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+          content: Center(
+            child: Text(
+              'Invalid email or password!',
+              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
           ),
-          backgroundColor: Colors.teal,
+          backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
       );

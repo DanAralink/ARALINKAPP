@@ -17,38 +17,21 @@ class _AboutScreenState extends State<AboutScreen> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 255, 240, 183),
         leading: IconButton(
-          icon: const Icon(Iconsax.arrow_left, color: Colors.black),
+          icon: const Icon(Iconsax.arrow_left_2, color: Colors.black),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        title: Center(
-          child: Text(
-            'About',
-            style: GoogleFonts.indieFlower(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
+        title: Text(
+          'About',
+          style: GoogleFonts.indieFlower(
+            fontWeight: FontWeight.bold,
+            color: Colors.teal,
           ),
         ),
         iconTheme: const IconThemeData(
           color: Color.fromARGB(255, 223, 223, 223),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text(
-              'Done',
-              style: GoogleFonts.indieFlower(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(14.0),

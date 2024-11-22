@@ -169,7 +169,7 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
             cursorColor: Colors.black54,
             decoration: InputDecoration(
               hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
-              hintText: "Credential Links (Drive Link)",
+              hintText: "Requirements (Drive Link)",
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
                 borderSide: BorderSide.none,
@@ -180,6 +180,12 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
                 Iconsax.link,
                 color: Colors.white,
               ),
+              suffixIcon: IconButton(
+                  icon: Icon(
+                    Iconsax.eye,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => _showCredentialDialog(context)),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -361,6 +367,98 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCredentialDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Column(
+            children: [
+              Image.asset(
+                "assets/images/aralink-logo.png",
+                width: 90,
+                height: 90,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Tutor Requirements",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Please provide the required documents listed below. Failure to do so may result in your application being rejected.",
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          content: const SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Required Documents:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.8,
+                  ),
+                ),
+                Text(
+                  "- Valid IDs (National ID, Passport, Driver’s License, Philippine Postal ID, PRC ID, UMID, SSS ID)",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                Text(
+                  "- Resume/CV",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                Text(
+                  "- NBI Clearance",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                Text(
+                  "- Police Clearance",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Optional Documents:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.8,
+                  ),
+                ),
+                Text(
+                  "- Certificates",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+                minimumSize: const Size(100, 40),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "Close",
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -554,10 +652,8 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
 
         await userCredential.user!.sendEmailVerification();
 
-        // Get the FCM token
         String? fcmToken = await FirebaseMessaging.instance.getToken();
 
-        // Store the user's data in the Firebase Realtime Database
         await _database.child("tutors/${userCredential.user!.uid}").set({
           "firstName": _firstNameController.text.trim(),
           "lastName": _lastNameController.text.trim(),
@@ -573,10 +669,9 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
               : null,
           "idImageUrl": _uploadedImageUrl,
           "timestamp": DateTime.now().millisecondsSinceEpoch,
-          "fcmToken": fcmToken, // Store the FCM token
+          "fcmToken": fcmToken,
         });
 
-        // Notify user to verify their email
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -594,7 +689,10 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
         );
       } on FirebaseAuthException {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration Failed!')),
+          const SnackBar(
+            content: Center(child: Text('Registration Failed!')),
+            backgroundColor: Colors.red,
+          ),
         );
       } finally {
         setState(() {

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "aralink-d9c4c",
+  "private_key_id": "87ed3286d7164beae2344c3f99b699a4fd2195a0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDJCh1P/tGOgmB7\nMkgYYQMdYcUeyzPsE3odylBvhm3IBdpF6sACOxP/Z5Ka/abA9XTJgMt4uGWOEyfw\nt0pHC1lPHYcNWnnLeaa9poFnoOvZ+2aIvTS6pQVcDNpgagWfn6RiGxmQsR1Skde1\n0SccQlqrbHtJG9YJuvw01i78PVE11m9vxcSVLbemD6HmD9FnPYxFp2kM+VhM9WKH\nXURDwQ1GR8ypVH1QLh9oTAlLF1J89LyJ4IEcv1tZ8G8iUiYJuAZDmm2zzSARk/fg\nmLqOjLSyO2hsxALFrtz56fN4PoEYFahJDVZwStIt68EAyJDWhFvQEoQvlQDX4dce\nG9oDDF6TAgMBAAECggEAHCbQ76dDU/04zSI/iz5memz69p1w3LbmK5lthbh201gn\ny7ucKJPPmz0MgAH99wOdgiwJZ2hhkYa9hI0+FvsQBgP1/0OIo5rE48YW/9ppEcy3\npnU27DNN2qkoGUaExBNNqGPwGAgH5EyXlBZrhMmxOv5auI7v0Xaqziv3R2C/aFYq\nYlZvRT/ptSYuD5+JXG3nmJTacEyX0VfuS4XOlQi7cRBGRC+pWkYBoQv7INrGyUAu\nZNdya6jvL4taDsF4JKJ9v7iihO+PhA684S47PCa+u9p2ZD2L+ex7y2Uvwb4R33wC\nDHL+DS9VeniZjOa5J8EFGz0gcI0Y9oxH5M9lt3mBNQKBgQDsRoyPbCfU5xHLQUDo\nKv60w5YJGmkKdQz+OajrWhxhT6EuVSbZ/ASC4GDS7Rwab7KV8wI2by/CDw0ASlpr\nyMbPoW2rxsR1vXl497bWxnwiHYuLkq72096I3AgE5WcVCOWeTe4SjsQvSfIO7Yin\nER6cUj1eVv9PsJQhC3YTWxqpLwKBgQDZ0ojWI5U7TqyXlSWelXFRVPxdSd7ZcVDY\nvDkPn0UsO1sLpaOnGLBiwOt49TRam9KvsbZ0XCJG1aXiPlogYCOwR3BytxYzWNfg\n+lxAE5GRgjzvuzogoAj96N0F04pMMSrfbrbsNde8xNUs5fQ3t0SrBenWJ0fyhavY\neXrtlAZ/3QKBgQDNY76IZpJxhrR3JbBQoh9r76GbJDQvfPTggisO+/Qzu073wdnW\nIDejtX01nhyR9osdwnMn8ptnbEH3AKt9irkYgNGfQ1hAqYbQ2zU7mqsJ1PkbSVWD\nB0YpXmwyJWDobiV86W2NAEIWgYdD5sSlxkH/zZW/Toz+Lxd1aksoJEgWzQKBgQDY\nVIASLMTJYhmHclkqZsFkRUNeYz8wNZpVppoFKelJRKnnp1ohWiPT8EXsm5qjYp6c\nX6MVbWudbhKR39sizFilek3zoGIsHNBKYFu+R7ELEo3yib/xJv/HLL5WSwHPKgWq\nYgrKDa91iwcs0DT8IMfSEs1qIxkRhDBnjj7INXs/AQKBgHgFac3qqzaSFa7Jodxd\narIOHedZt1GB4lx3qfh0l1VN7yWcF5t9EMO4hxIJyu9i1OnNorrc5LBNfmyi5gT0\nXswc7HDAq+wBFZhHEL7UICKgtuI/vmDpEhcHeXnRW55FAK2ReMB5TAu6wZQBU4Os\n4AhHovKU8WGzSw7pxawoB2ab\n-----END PRIVATE KEY-----\n",
+  "client_email": "aralink-capstone-2024@aralink-d9c4c.iam.gserviceaccount.com",
+  "client_id": "100277922639353622112",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/aralink-capstone-2024%40aralink-d9c4c.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

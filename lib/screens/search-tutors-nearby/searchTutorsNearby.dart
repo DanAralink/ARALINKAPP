@@ -52,15 +52,56 @@ class NearbyTutorsTab extends StatefulWidget {
 }
 
 class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
-  final DatabaseReference _databaseRef =
-      FirebaseDatabase.instance.ref('tutors');
+  final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref('tutors');
   List<Map<String, dynamic>> nearbyTutors = [];
+  List<Map<String, dynamic>> filteredTutors = [];
   bool isLoading = false;
+  TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_filterTutors);
+    _searchNearbyTutors();  // Fetch tutors when the screen loads
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_filterTutors);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterTutors() {
+    String query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredTutors = nearbyTutors.where((tutor) {
+        final name = '${tutor['firstName']} ${tutor['lastName']}'.toLowerCase();
+        final email = tutor['email']?.toLowerCase() ?? '';
+        return name.contains(query) || email.contains(query);
+      }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              labelText: 'Search Tutors',
+              hintText: 'Enter name or email',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
         SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.only(left: 10, right: 10),
@@ -86,7 +127,7 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
           child: Center(
             child: isLoading
                 ? const CircularProgressIndicator(color: Colors.teal)
-                : nearbyTutors.isEmpty
+                : filteredTutors.isEmpty
                     ? _buildNoTutorsFound()
                     : _buildTutorsList(),
           ),
@@ -123,9 +164,9 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
 
   Widget _buildTutorsList() {
     return ListView.builder(
-      itemCount: nearbyTutors.length,
+      itemCount: filteredTutors.length,
       itemBuilder: (context, index) {
-        final tutor = nearbyTutors[index];
+        final tutor = filteredTutors[index];
         final tutorUserId = tutor['userId']?.toString() ?? '';
 
         return Padding(
@@ -259,11 +300,13 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
 
         setState(() {
           nearbyTutors = tempTutors;
+          filteredTutors = tempTutors; 
           isLoading = false;
         });
       } else {
         setState(() {
           nearbyTutors = [];
+          filteredTutors = [];
           isLoading = false;
         });
       }
@@ -293,13 +336,13 @@ class _NearbyTutorsTabState extends State<NearbyTutorsTab> {
     }
 
     if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+      return Future.error('Location permissions are permanently denied');
     }
 
     return await Geolocator.getCurrentPosition();
   }
 }
+
 
 class OnlineTutorsTab extends StatefulWidget {
   const OnlineTutorsTab({super.key});
@@ -309,15 +352,32 @@ class OnlineTutorsTab extends StatefulWidget {
 }
 
 class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
-  final DatabaseReference _databaseRef =
-      FirebaseDatabase.instance.ref('tutors');
+  final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref('tutors');
   List<Map<String, dynamic>> onlineTutors = [];
+  List<Map<String, dynamic>> filteredTutors = [];  // List to store filtered tutors
   bool isLoading = false;
+  TextEditingController searchController = TextEditingController();  // Controller for the search input
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10),
+          child: TextField(
+            controller: searchController,
+            decoration: InputDecoration(
+              labelText: 'Search Tutors',
+              hintText: 'Search Tutors...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              suffixIcon: Icon(Icons.search),
+            ),
+            onChanged: _filterTutors,  // Trigger filter on text change
+          ),
+        ),
         SizedBox(height: 10),
         Padding(
           padding: const EdgeInsets.only(left: 10, right: 10),
@@ -343,7 +403,7 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
           child: Center(
             child: isLoading
                 ? const CircularProgressIndicator(color: Colors.teal)
-                : onlineTutors.isEmpty
+                : filteredTutors.isEmpty
                     ? _buildNoTutorsFound()
                     : _buildTutorsList(),
           ),
@@ -380,9 +440,9 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
 
   Widget _buildTutorsList() {
     return ListView.builder(
-      itemCount: onlineTutors.length,
+      itemCount: filteredTutors.length,
       itemBuilder: (context, index) {
-        final tutor = onlineTutors[index];
+        final tutor = filteredTutors[index];
         final tutorUserId = tutor['userId']?.toString() ?? '';
 
         return Padding(
@@ -467,11 +527,13 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
 
         setState(() {
           onlineTutors = tempTutors;
+          filteredTutors = tempTutors;  // Initialize filteredTutors with all tutors
           isLoading = false;
         });
       } else {
         setState(() {
           onlineTutors = [];
+          filteredTutors = [];
           isLoading = false;
         });
       }
@@ -482,4 +544,14 @@ class _OnlineTutorsTabState extends State<OnlineTutorsTab> {
       });
     }
   }
+
+  void _filterTutors(String query) {
+    setState(() {
+      filteredTutors = onlineTutors
+          .where((tutor) =>
+              '${tutor['firstName']} ${tutor['lastName']}'.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 }
+
