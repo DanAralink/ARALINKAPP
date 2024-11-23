@@ -249,7 +249,39 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Sign in the user
+      DatabaseReference usersRef =
+          FirebaseDatabase.instance.ref().child('users');
+      DataSnapshot snapshot = await usersRef.get();
+
+      bool emailExists = false;
+
+      if (snapshot.exists) {
+        Map<dynamic, dynamic> users = snapshot.value as Map<dynamic, dynamic>;
+        for (var user in users.values) {
+          if (user['email'] == _emailController.text.trim()) {
+            emailExists = true;
+            break;
+          }
+        }
+      }
+
+      if (!emailExists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Center(
+              child: Text(
+                'The email provided does not exist in the tutee list.',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -258,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
       User? user = userCredential.user;
 
       if (user != null) {
-        await user.reload(); 
+        await user.reload();
         if (user.emailVerified) {
           DatabaseReference userRef =
               FirebaseDatabase.instance.ref().child('users').child(user.uid);
@@ -281,18 +313,15 @@ class _LoginScreenState extends State<LoginScreen> {
               duration: Duration(seconds: 3),
             ),
           );
-          _auth.signOut(); // Sign out the user if not verified
+          _auth.signOut();
         }
       }
     } on FirebaseAuthException {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(
-            child: Text(
-              'Invalid email or password!',
-              style: const TextStyle(
-                  fontWeight: FontWeight.w600, color: Colors.white),
-            ),
+        const SnackBar(
+          content: Text(
+            'Invalid email or password!',
+            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
           ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),

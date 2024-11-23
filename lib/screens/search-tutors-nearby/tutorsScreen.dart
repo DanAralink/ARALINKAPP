@@ -85,7 +85,7 @@ class TutorScreen extends StatelessWidget {
           content: const Text('Are you sure you want to book this tutor?'),
           actions: [
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
@@ -96,7 +96,7 @@ class TutorScreen extends StatelessWidget {
                 backgroundColor: const Color.fromARGB(255, 255, 240, 183),
                 minimumSize: const Size(100, 40),
               ),
-              child: const Text('Book Now'),
+              child: const Text('Book Now', style: TextStyle(color: Colors.black)),
               onPressed: () {
                 Navigator.of(context).pop(true);
               },

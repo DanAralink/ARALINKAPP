@@ -249,18 +249,23 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
     });
 
     try {
+      // Reference to the 'tutors' node
       DatabaseReference tutorsRef =
           FirebaseDatabase.instance.ref().child('tutors');
 
+      // Fetch data from the 'tutors' node
       DataSnapshot snapshot = await tutorsRef.get();
 
       bool emailExists = false;
 
+      // Check if the email exists in the tutors node
       if (snapshot.exists) {
         Map<String, dynamic> tutorsMap =
             Map<String, dynamic>.from(snapshot.value as Map);
+
         for (var entry in tutorsMap.entries) {
-          var tutorData = Map<String, dynamic>.from(entry.value);
+          Map<String, dynamic> tutorData =
+              Map<String, dynamic>.from(entry.value);
           if (tutorData['email'] == _emailController.text.trim()) {
             emailExists = true;
             break;
@@ -268,65 +273,69 @@ class _TutorLoginScreenState extends State<TutorLoginScreen> {
         }
       }
 
+      // If the email doesn't exist in the tutors node
       if (!emailExists) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'The email provided does not exist in the tutors list.',
-              style:
-                  TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+            content: Center(
+              child: Text(
+                'The email provided does not exist in the tutors list.',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              ),
             ),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 3),
           ),
         );
-      } else {
-        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+        return;
+      }
 
-        User? user = userCredential.user;
+      // Sign in the tutor
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-        if (user != null) {
-          DatabaseReference tutorRef = tutorsRef.child(user.uid);
+      User? user = userCredential.user;
 
-          DatabaseEvent event = await tutorRef.once();
-          DataSnapshot userSnapshot = event.snapshot;
+      if (user != null) {
+        // Check if the tutor's account is verified
+        DatabaseReference tutorRef = tutorsRef.child(user.uid);
+        DatabaseEvent event = await tutorRef.once();
+        DataSnapshot userSnapshot = event.snapshot;
 
-          final tutorData = userSnapshot.value as Map<dynamic, dynamic>?;
+        final tutorData = userSnapshot.value as Map<dynamic, dynamic>?;
 
-          if (tutorData != null && tutorData['account-status'] == 'verified') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const TutorTabNavigation()),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Your account is not yet verified. Please try again later.',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600, color: Colors.white),
-                ),
-                backgroundColor: Colors.teal,
-                duration: Duration(seconds: 3),
+        if (tutorData != null && tutorData['account-status'] == 'verified') {
+          // Navigate to the tutor dashboard
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TutorTabNavigation()),
+          );
+        } else {
+          // Account not verified
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Your account is not yet verified. Please try again later.',
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
               ),
-            );
-
-            await _auth.signOut();
-          }
+              backgroundColor: Colors.teal,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          await _auth.signOut();
         }
       }
     } on FirebaseAuthException {
+      // Handle invalid email or password
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Center(
-            child: Text(
-              'Invalid email or password!',
-              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
+          content: Text(
+            'Invalid email or password!',
+            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
           ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
