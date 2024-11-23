@@ -16,10 +16,10 @@ class _HomeTutorsScreenState extends State<HomeTutorsScreen> {
   late PageController _pageController;
 
   List<String> imageUrls = [
-    'https://via.placeholder.com/350x150/FF5733/FFFFFF?text=Image+1',
-    'https://via.placeholder.com/350x150/33FF57/FFFFFF?text=Image+2',
-    'https://via.placeholder.com/350x150/3357FF/FFFFFF?text=Image+3',
-    'https://via.placeholder.com/350x150/FFFF33/FFFFFF?text=Image+4',
+    'https://media.istockphoto.com/id/1444142886/photo/teacher-and-student-giving-each-other-a-high-five-in-a-library.jpg?s=612x612&w=0&k=20&c=ixCSDnRi3D7LiQKz29-8f4YZ1bmkhx_XwbKW_b7ZXx8=',
+    'https://media.istockphoto.com/id/1034464980/photo/mother-helping-daughter-with-homework.jpg?s=612x612&w=0&k=20&c=ypkpyR_Sry5VZ2wAE8E2Q2qTzMqMY3V-N52VSeD5Ya0=',
+    'https://media.istockphoto.com/id/1409994740/photo/mother-gently-correcting-her-sons-homework.jpg?s=612x612&w=0&k=20&c=I1u8mfh9jg_LWawOiU4QHiaCe53AgzIsbBC8C-8F2r4=',
+    'https://media.istockphoto.com/id/187244393/photo/we-will-get-to-the-right-answer-eventually.jpg?s=612x612&w=0&k=20&c=sv85YclfSvJwBzxHipFN5YSNIDSU6YXe8skqZb6QVjw=',
   ];
 
   List<Map<String, dynamic>> feedbacks = [];
