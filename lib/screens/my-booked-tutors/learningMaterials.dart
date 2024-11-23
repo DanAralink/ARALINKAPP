@@ -41,9 +41,9 @@ class LearningMaterialsScreen extends StatelessWidget {
         url: urli,
         customTabsOptions: const CustomTabsOptions(
           colorScheme: CustomTabsColorScheme.dark,
-          toolbarColor: Colors.deepPurple,
-          secondaryToolbarColor: Colors.green,
-          navigationBarColor: Colors.amber,
+          toolbarColor: Color.fromARGB(255, 255, 240, 183),
+          secondaryToolbarColor: Colors.teal,
+          navigationBarColor: Color.fromARGB(255, 255, 240, 183),
           shareState: CustomTabsShareState.on,
           instantAppsEnabled: true,
           showTitle: true,
@@ -51,8 +51,8 @@ class LearningMaterialsScreen extends StatelessWidget {
         ),
         safariVCOptions: const SafariViewControllerOptions(
           barCollapsingEnabled: true,
-          preferredBarTintColor: Colors.green,
-          preferredControlTintColor: Colors.amber,
+          preferredBarTintColor: Colors.teal,
+          preferredControlTintColor: Color.fromARGB(255, 255, 240, 183),
           dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
           modalPresentationCapturesStatusBarAppearance: true,
         ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_web_browser/flutter_web_browser.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:iconsax/iconsax.dart';
@@ -43,6 +44,34 @@ class TutorScreen extends StatelessWidget {
       'tutor': tutorData,
       'profile': tutorProfileData,
     };
+  }
+
+  Future<void> _openUrl(String? urli) async {
+    if (urli != null) {
+      // Use FlutterWebBrowser to open the URL
+      FlutterWebBrowser.openWebPage(
+        url: urli,
+        customTabsOptions: const CustomTabsOptions(
+          colorScheme: CustomTabsColorScheme.dark,
+          toolbarColor: Color.fromARGB(255, 255, 240, 183),
+          secondaryToolbarColor: Colors.teal,
+          navigationBarColor: Color.fromARGB(255, 255, 240, 183),
+          shareState: CustomTabsShareState.on,
+          instantAppsEnabled: true,
+          showTitle: true,
+          urlBarHidingEnabled: true,
+        ),
+        safariVCOptions: const SafariViewControllerOptions(
+          barCollapsingEnabled: true,
+          preferredBarTintColor: Colors.teal,
+          preferredControlTintColor: Color.fromARGB(255, 255, 240, 183),
+          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
+          modalPresentationCapturesStatusBarAppearance: true,
+        ),
+      );
+    } else {
+      print("URL is null, cannot launch");
+    }
   }
 
   Future<void> _bookTutor(BuildContext context) async {
@@ -367,6 +396,9 @@ class TutorScreen extends StatelessWidget {
                             case "Location":
                               subtitle = 'Tap to view location';
                               break;
+                            case "Credentials":
+                              subtitle = 'Tap to view credentials';
+                              break;
                             default:
                               subtitle = 'N/A';
                           }
@@ -402,6 +434,8 @@ class TutorScreen extends StatelessWidget {
                                         ),
                                       ),
                                     );
+                                  } else if (tile.title == "Credentials") {
+                                      _openUrl(tutorData['credentialLink']);
                                   }
                                 },
                               ),
@@ -499,5 +533,9 @@ List<CustomListTile> customListTiles = [
   CustomListTile(
     title: "Location",
     icon: Iconsax.location,
+  ),
+  CustomListTile(
+    title: "Credentials",
+    icon: Iconsax.link,
   ),
 ];

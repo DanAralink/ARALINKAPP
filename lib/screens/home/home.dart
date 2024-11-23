@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
             feedbacks.isEmpty
                 ? Center(child: CircularProgressIndicator())
                 : Container(
-                    height: 150, // Set a fixed height for the feedback list
+                    height: 300, // Set a fixed height for the feedback list
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: feedbacks.length,
@@ -169,10 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         var feedback = feedbacks[index];
                         var tutorId = feedback['tutorId'];
                         var tuteeId = feedback['tuteeId'];
-                        var tutor = tutors[
-                            tutorId]; // Fetch tutor details using tutorId
-                        var tutee = tutees[
-                            tuteeId]; // Fetch tutee details using tuteeId
+                        var tutor = tutors[tutorId];
+                        var tutee = tutees[tuteeId];
                         var tutorName =
                             '${tutor?['firstName']} ${tutor?['lastName']}';
                         var tuteeName =
@@ -189,8 +187,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(14),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
+                                Center(
+                                  child: Image.asset(
+                                      'assets/images/aralink-main-logo.png',
+                                      width: 120,
+                                      height: 120),
+                                ),
                                 Text(
                                   'Feedback from: $tuteeName',
                                   style: GoogleFonts.poppins(

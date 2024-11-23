@@ -403,6 +403,18 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Center(
+                  child: Text(
+                    "NOTE: All Drive links must be shared. Do not forget!",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.8,
+                      color: Colors.red,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
                 Text(
                   "Required Documents:",
                   style: TextStyle(
@@ -438,6 +450,72 @@ class _TutorRegisterScreenState extends State<TutorRegisterScreen> {
                 ),
                 Text(
                   "- Certificates",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Tutor Application Form:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.8,
+                  ),
+                ),
+                Text(
+                  "- Full Name\n"
+                  "- Address\n"
+                  "- E-mail Address\n"
+                  "- Phone Number\n"
+                  "- Birth Date\n"
+                  "- Gender\n"
+                  "- Nationality\n",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Please enter the age groups you are able to tutor:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.8,
+                  ),
+                ),
+                Text(
+                  "- Pre Kinder\n"
+                  "- Grade 1\n"
+                  "- Grade 2\n"
+                  "- Grade 3\n"
+                  "- Grade 4\n"
+                  "- Grade 5\n"
+                  "- Grade 6",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Additional Information:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.8,
+                  ),
+                ),
+                Text(
+                  "- If you have tutored before, tell us about your experience.\n"
+                  "- Share what motivates you, your passions, and plans.\n"
+                  "- Provide details about your hobbies, interests, or anything that helps us match you with the right students.",
+                  style: TextStyle(fontSize: 14, height: 1.5),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Our Goal:",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.8,
+                  ),
+                ),
+                Text(
+                  "We aim to provide the best match between tutors and students to enhance the learning experience and bring value to both parties.",
                   style: TextStyle(fontSize: 14, height: 1.5),
                 ),
               ],
