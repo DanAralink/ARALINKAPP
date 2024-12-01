@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:flutter_web_browser/flutter_web_browser.dart';
 
 class LearningMaterialsScreen extends StatelessWidget {
@@ -34,9 +35,20 @@ class LearningMaterialsScreen extends StatelessWidget {
     return materials;
   }
 
-  Future<void> _openUrl(String? urli) async {
-
+Future<void> _openUrl(String? urli) async {
+  if (urli == null || urli.isEmpty) {
+    print('Invalid URL');
+    return;
   }
+
+  final Uri uri = Uri.parse(urli);
+
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    print('Could not launch $urli');
+  }
+}
 
   @override
   Widget build(BuildContext context) {

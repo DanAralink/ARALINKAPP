@@ -27,7 +27,7 @@ dependencies:
   mailer: ^6.2.0
   shared_preferences: ^2.3.2
   smooth_page_indicator: ^1.2.0+3
-  url_launcher: ^6.3.0
+  url_launcher: ^6.3.1
   firebase_analytics: ^11.3.5
   pointycastle: ^3.9.1
   googleapis_auth: ^1.6.0

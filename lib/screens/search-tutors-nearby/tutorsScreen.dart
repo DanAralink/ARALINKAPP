@@ -11,6 +11,7 @@ import 'package:googleapis_auth/auth_io.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis_auth/googleapis_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TutorScreen extends StatelessWidget {
   final String userId;
@@ -46,7 +47,20 @@ class TutorScreen extends StatelessWidget {
     };
   }
 
-  Future<void> _openUrl(String? urli) async {}
+Future<void> _openUrl(String? urli) async {
+  if (urli == null || urli.isEmpty) {
+    print('Invalid URL');
+    return;
+  }
+
+  final Uri uri = Uri.parse(urli);
+
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    print('Could not launch $urli');
+  }
+}
 
 Future<void> _bookTutor(BuildContext context) async {
   String studentId = _auth.currentUser!.uid;
