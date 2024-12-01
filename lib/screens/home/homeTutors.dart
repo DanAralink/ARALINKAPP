@@ -71,7 +71,6 @@ class _HomeTutorsScreenState extends State<HomeTutorsScreen> {
               feedbacks.add({
                 'tuteeId': userId,
                 'tutorId': tutorId,
-                'feedbackMessage': feedbackDetails['feedbackMessage'],
                 'ratings': feedbackDetails['ratings'],
               });
             });
@@ -177,7 +176,6 @@ class _HomeTutorsScreenState extends State<HomeTutorsScreen> {
                             '${tutor?['firstName']} ${tutor?['lastName']}';
                         var tuteeName =
                             '${tutee?['firstName']} ${tutee?['lastName']}';
-                        var feedbackMessage = feedback['feedbackMessage'];
                         var rating = feedback['ratings'];
 
                         return Card(
@@ -202,11 +200,6 @@ class _HomeTutorsScreenState extends State<HomeTutorsScreen> {
                                   const SizedBox(height: 8),
                                   Text(
                                     'Tutor: $tutorName',
-                                    style: GoogleFonts.poppins(fontSize: 14),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    feedbackMessage,
                                     style: GoogleFonts.poppins(fontSize: 14),
                                   ),
                                   const SizedBox(height: 8),

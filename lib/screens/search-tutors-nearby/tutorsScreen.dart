@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_web_browser/flutter_web_browser.dart';
+// import 'package:flutter_web_browser/flutter_web_browser.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:iconsax/iconsax.dart';
@@ -46,59 +46,100 @@ class TutorScreen extends StatelessWidget {
     };
   }
 
-  Future<void> _openUrl(String? urli) async {
-    if (urli != null) {
-      // Use FlutterWebBrowser to open the URL
-      FlutterWebBrowser.openWebPage(
-        url: urli,
-        customTabsOptions: const CustomTabsOptions(
-          colorScheme: CustomTabsColorScheme.dark,
-          toolbarColor: Color.fromARGB(255, 255, 240, 183),
-          secondaryToolbarColor: Colors.teal,
-          navigationBarColor: Color.fromARGB(255, 255, 240, 183),
-          shareState: CustomTabsShareState.on,
-          instantAppsEnabled: true,
-          showTitle: true,
-          urlBarHidingEnabled: true,
-        ),
-        safariVCOptions: const SafariViewControllerOptions(
-          barCollapsingEnabled: true,
-          preferredBarTintColor: Colors.teal,
-          preferredControlTintColor: Color.fromARGB(255, 255, 240, 183),
-          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
-          modalPresentationCapturesStatusBarAppearance: true,
-        ),
+  Future<void> _openUrl(String? urli) async {}
+
+Future<void> _bookTutor(BuildContext context) async {
+  String studentId = _auth.currentUser!.uid;
+
+  // Confirm initial booking
+  bool confirmed = await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Confirm Booking'),
+        content: const Text('Are you sure you want to book this tutor?'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            onPressed: () {
+              Navigator.of(context).pop(false);
+            },
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color.fromARGB(255, 255, 240, 183),
+              minimumSize: const Size(100, 40),
+            ),
+            child: const Text('Book Now', style: TextStyle(color: Colors.black)),
+            onPressed: () {
+              Navigator.of(context).pop(true);
+            },
+          ),
+        ],
       );
-    } else {
-      print("URL is null, cannot launch");
+    },
+  );
+
+  if (!confirmed) return;
+
+  try {
+    // Fetch e-wallet data
+    DatabaseReference ewalletRef = FirebaseDatabase.instance.ref('Ewallets/');
+    DataSnapshot ewalletSnapshot = await ewalletRef.get();
+
+    if (!ewalletSnapshot.exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Ewallet data not found.')),
+      );
+      return;
     }
-  }
 
-  Future<void> _bookTutor(BuildContext context) async {
-    String studentId = _auth.currentUser!.uid;
-
-    bool confirmed = await showDialog(
+    Map<String, dynamic> ewalletData =
+        Map<String, dynamic>.from(ewalletSnapshot.value as Map);
+    String qrcodeUrl = ewalletData['qrcodeurl'] ?? '';
+    String accountNumber = ewalletData['accountnumber'] ?? '';
+    String accountName = ewalletData['accountname'] ?? '';
+    String ewalletname = ewalletData['ewalletname'] ?? '';
+    // Show QR code and require payment reference
+    String? paymentReference = await showDialog(
       context: context,
       builder: (BuildContext context) {
+        TextEditingController referenceController = TextEditingController();
         return AlertDialog(
-          title: const Text('Confirm Booking'),
-          content: const Text('Are you sure you want to book this tutor?'),
+          title: const Text('Complete Payment'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.network(qrcodeUrl, height: 200, width: 200),
+              const SizedBox(height: 10),
+              Text('$ewalletname'),
+              Text('Account Name: $accountName'),
+              Text('Account Number: $accountNumber'),
+              const SizedBox(height: 10),
+              TextField(
+                controller: referenceController,
+                decoration: const InputDecoration(
+                  labelText: 'Payment Reference Number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
               onPressed: () {
-                Navigator.of(context).pop(false);
+                Navigator.of(context).pop(null);
               },
             ),
             TextButton(
+              child: const Text('Confirm', style: TextStyle(color: Colors.black)),
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
                 backgroundColor: const Color.fromARGB(255, 255, 240, 183),
-                minimumSize: const Size(100, 40),
               ),
-              child: const Text('Book Now', style: TextStyle(color: Colors.black)),
               onPressed: () {
-                Navigator.of(context).pop(true);
+                Navigator.of(context).pop(referenceController.text.trim());
               },
             ),
           ],
@@ -106,73 +147,110 @@ class TutorScreen extends StatelessWidget {
       },
     );
 
-    if (confirmed == true) {
-      try {
-        DatabaseReference tutorRef =
-            FirebaseDatabase.instance.ref('tutors/$userId');
-        DataSnapshot tutorSnapshot = await tutorRef.get();
-
-        if (!tutorSnapshot.exists) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error: Tutor data not found.')),
-          );
-          return;
-        }
-
-        Map<String, dynamic> tutorData =
-            Map<String, dynamic>.from(tutorSnapshot.value as Map);
-        String tutorFcmToken = tutorData['fcmToken'] ?? '';
-
-        DatabaseReference tuteeRef =
-            FirebaseDatabase.instance.ref('users/$studentId');
-        DataSnapshot tuteeSnapshot = await tuteeRef.get();
-
-        if (!tuteeSnapshot.exists) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error: Tutee data not found.')),
-          );
-          return;
-        }
-
-        Map<String, dynamic> tuteeData =
-            Map<String, dynamic>.from(tuteeSnapshot.value as Map);
-        String tuteeFcmToken = tuteeData['fcmToken'] ?? '';
-
-        DatabaseReference bookingsRef =
-            FirebaseDatabase.instance.ref('Bookings/$userId/$studentId');
-
-        await bookingsRef.set({
-          'isRequestingCancel': false,
-          'status': 'Pending',
-          'timestamp': DateTime.now().toIso8601String(),
-          'tutor_id': userId,
-          'tutee_id': studentId,
-          'tutor_fcmToken': tutorFcmToken,
-          'tutee_fcmToken': tuteeFcmToken,
-        });
-
-        await _sendPushNotification(
-          tutorFcmToken: tutorFcmToken,
-          title: "New Booking Request!",
-          body:
-              "You have a new booking request from tutee: ${tuteeData['firstName']} ${tuteeData['lastName']}.",
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Center(child: Text('You have successfully booked a tutor!')),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } catch (e) {
-        // Handle errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error booking tutor: $e')),
-        );
-      }
+    if (paymentReference == null || paymentReference.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payment reference is required to complete the booking.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
+
+
+      DatabaseReference tutorRef =
+          FirebaseDatabase.instance.ref('tutors/$userId');
+      DataSnapshot tutorSnapshot = await tutorRef.get();
+
+      DatabaseReference tutorProfileRef =
+          FirebaseDatabase.instance.ref('tutor_profiles/$userId');
+      DataSnapshot tutorProfileSnapshot = await tutorProfileRef.get();
+
+      if (!tutorSnapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Tutor data not found.')),
+        );
+        return;
+      }
+
+            if (!tutorProfileSnapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Tutor Profile data not found.')),
+        );
+        return;
+      }
+
+
+      Map<String, dynamic> tutorData =
+          Map<String, dynamic>.from(tutorSnapshot.value as Map);
+      String tutorFcmToken = tutorData['fcmToken'] ?? '';
+
+      Map<String, dynamic> tutorProfileData =
+          Map<String, dynamic>.from(tutorProfileSnapshot.value as Map);
+      String tutorRatePerHour = tutorProfileData['ratePerHour'] ?? '';
+      String tutorTotalHours = tutorProfileData['totalHours'] ?? '';
+
+      DatabaseReference tuteeRef =
+          FirebaseDatabase.instance.ref('users/$studentId');
+      DataSnapshot tuteeSnapshot = await tuteeRef.get();
+
+      if (!tuteeSnapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: Tutee data not found.')),
+        );
+        return;
+      }
+
+      Map<String, dynamic> tuteeData =
+          Map<String, dynamic>.from(tuteeSnapshot.value as Map);
+      String tuteeFcmToken = tuteeData['fcmToken'] ?? '';
+
+      // Use push to generate a unique key for the booking
+      DatabaseReference bookingsRef =
+          FirebaseDatabase.instance.ref('Bookings/$userId/$studentId');
+      DatabaseReference newBookingRef = bookingsRef.push();
+
+      await newBookingRef.set({
+        'isRequestingCancel': false,
+        'status': 'Pending',
+        'timestamp': DateTime.now().toIso8601String(),
+        'tutor_id': userId,
+        'tutee_id': studentId,
+        'tutor_fcmToken': tutorFcmToken,
+        'tutee_fcmToken': tuteeFcmToken,
+        'hours_per_session':tutorTotalHours,
+        'rate_per_hour':tutorRatePerHour,
+        'payment_reference_number':paymentReference,
+        'selected_ewallet':ewalletname,
+        'selected_ewallet_account_name':accountName,
+        'selected_ewallet_account_number':accountNumber,
+      });
+
+      await _sendPushNotification(
+        tutorFcmToken: tutorFcmToken,
+        title: "New Booking Request!",
+        body:
+            "You have a new booking request from tutee: ${tuteeData['firstName']} ${tuteeData['lastName']}.",
+      );
+
+
+
+    // Proceed with booking logic (same as your original code)
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('You have successfully booked a tutor!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error booking tutor: $e')),
+    );
   }
+}
+
+
 
   Future<void> _sendPushNotification({
     required String tutorFcmToken,
@@ -302,12 +380,39 @@ class TutorScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Text(
-                            "${tutorData['firstName'] ?? 'First Name'} ${tutorData['lastName'] ?? 'Last Name'}",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment
+                                .center, // Centers the content horizontally
+                            children: [
+                              Text(
+                                "${tutorData['firstName'] ?? 'First Name'} ${tutorData['lastName'] ?? 'Last Name'}",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(
+                                  width:
+                                      8), // Space between the name and "Verified" label
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(
+                                      0.3), // Background color with transparency
+                                  borderRadius: BorderRadius.circular(
+                                      12), // Rounded corners
+                                ),
+                                child: Text(
+                                  "Verified",
+                                  style: GoogleFonts.roboto(
+                                    color: Colors.blue,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           Text(tutorData['email'] ?? 'Email not available'),
                         ],
@@ -326,10 +431,14 @@ class TutorScreen extends StatelessWidget {
                                 value = tutorProfileData['dayAvailability'] ??
                                     'N/A';
                                 break;
-                              case "Preferred Sessions":
-                                value = tutorProfileData['preferredSessions'] ??
-                                    'N/A';
-                                break;
+                                 case "Preferred Sessions":
+                              value = tutorProfileData['preferredSessions'].isNotEmpty
+                                  ? tutorProfileData['preferredSessions']
+                                      .map((session) =>
+                                          "${session['start']} - ${session['end']}")
+                                      .join('\n ')
+                                  : 'N/A';
+                              break;
                               case "Rate Per Hour":
                                 value =
                                     tutorProfileData['ratePerHour'] ?? 'N/A';
@@ -435,7 +544,7 @@ class TutorScreen extends StatelessWidget {
                                       ),
                                     );
                                   } else if (tile.title == "Credentials") {
-                                      _openUrl(tutorData['credentialLink']);
+                                    _openUrl(tutorData['credentialLink']);
                                   }
                                 },
                               ),

@@ -31,8 +31,7 @@ dependencies:
   firebase_analytics: ^11.3.5
   pointycastle: ^3.9.1
   googleapis_auth: ^1.6.0
-  flutter_inappwebview: ^5.8.0
-  flutter_web_browser: ^0.17.1
+  flutter_inappwebview: ^6.0.0
   flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
@@ -44,5 +43,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/videos/
+    # - assets/videos/
     - assets/aralink-d9c4c-87ed3286d716.json

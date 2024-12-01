@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:flutter_web_browser/flutter_web_browser.dart';
+// import 'package:flutter_web_browser/flutter_web_browser.dart';
 
 class LearningMaterialsScreen extends StatelessWidget {
   final String userId;
@@ -35,31 +35,7 @@ class LearningMaterialsScreen extends StatelessWidget {
   }
 
   Future<void> _openUrl(String? urli) async {
-    if (urli != null) {
-      // Use FlutterWebBrowser to open the URL
-      FlutterWebBrowser.openWebPage(
-        url: urli,
-        customTabsOptions: const CustomTabsOptions(
-          colorScheme: CustomTabsColorScheme.dark,
-          toolbarColor: Color.fromARGB(255, 255, 240, 183),
-          secondaryToolbarColor: Colors.teal,
-          navigationBarColor: Color.fromARGB(255, 255, 240, 183),
-          shareState: CustomTabsShareState.on,
-          instantAppsEnabled: true,
-          showTitle: true,
-          urlBarHidingEnabled: true,
-        ),
-        safariVCOptions: const SafariViewControllerOptions(
-          barCollapsingEnabled: true,
-          preferredBarTintColor: Colors.teal,
-          preferredControlTintColor: Color.fromARGB(255, 255, 240, 183),
-          dismissButtonStyle: SafariViewControllerDismissButtonStyle.close,
-          modalPresentationCapturesStatusBarAppearance: true,
-        ),
-      );
-    } else {
-      print("URL is null, cannot launch");
-    }
+
   }
 
   @override

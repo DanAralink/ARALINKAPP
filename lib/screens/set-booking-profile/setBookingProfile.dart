@@ -20,7 +20,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
   final TextEditingController _taglineController = TextEditingController();
 
   List<String> _selectedDayAvailability = [];
-  List<String> _selectedSessions = [];
+  List<Map<String, String>> _preferredSessionsTime = [];
   String? _selectedGradeLevel;
   String? _selectedSubject;
 
@@ -33,7 +33,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     'Saturday',
     'Sunday'
   ];
-  final List<String> _sessionOptions = ['Morning', 'Afternoon', 'Evening'];
   final List<String> _gradeLevelOptions = [
     'Pre-kinder',
     'Grade I',
@@ -74,8 +73,11 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
           setState(() {
             _selectedDayAvailability =
                 (data['dayAvailability'] as String?)?.split(', ') ?? [];
-            _selectedSessions =
-                (data['preferredSessions'] as String?)?.split(', ') ?? [];
+            _preferredSessionsTime =
+                (data['preferredSessions'] as List<dynamic>?)
+                        ?.map((e) => Map<String, String>.from(e))
+                        .toList() ??
+                    [];
             _addressController.text = data['address'] as String? ?? '';
             _totalHoursController.text = data['totalHours'] as String? ?? '';
             _rateController.text = data['ratePerHour'] as String? ?? '';
@@ -114,7 +116,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
         await databaseRef.set({
           'dayAvailability': _selectedDayAvailability.join(', '),
           'address': _addressController.text,
-          'preferredSessions': _selectedSessions.join(', '),
+          'preferredSessions': _preferredSessionsTime,
           'totalHours': _totalHoursController.text,
           'ratePerHour': _rateController.text,
           'gradeLevel': _selectedGradeLevel,
@@ -160,14 +162,9 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                       setState(() {
                         _selectedDayAvailability = value;
                       });
-                    }, _selectedDayAvailability),
+                    }),
                     const SizedBox(height: 20),
-                    _buildMultiSelectField('Tutoring Sessions', _sessionOptions,
-                        (value) {
-                      setState(() {
-                        _selectedSessions = value;
-                      });
-                    }, _selectedSessions),
+                    _buildPreferredSessionTimeField(),
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -177,8 +174,7 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                               'Total Hours', _totalHoursController,
                               isNumber: true),
                         ),
-                        const SizedBox(
-                            width: 10), 
+                        const SizedBox(width: 10),
                         Expanded(
                           child: _buildTextField(
                               'Rate per Hour', _rateController,
@@ -219,47 +215,6 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
                   ],
                 ),
               ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller,
-      {bool isNumber = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.indieFlower(
-            color: Colors.teal,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: Colors.teal, width: 1.5),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: Colors.teal, width: 2),
-          ),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.2),
-        ),
-        style: GoogleFonts.indieFlower(
-          color: Colors.black,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
-        inputFormatters:
-            isNumber ? [FilteringTextInputFormatter.digitsOnly] : [],
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter $label';
-          }
-          return null;
-        },
       ),
     );
   }
@@ -308,18 +263,120 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
     );
   }
 
-  Widget _buildMultiSelectField(String label, List<String> options,
-      ValueChanged<List<String>> onChanged, List<String> selectedValues) {
+  Widget _buildTextField(String label, TextEditingController controller,
+      {bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(labelText: label),
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      ),
+    );
+  }
+
+  Widget _buildPreferredSessionTimeField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
+        Text('Preferred Sessions (Time Frame)',
             style: GoogleFonts.indieFlower(
                 fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal)),
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: _preferredSessionsTime.length + 1,
+          itemBuilder: (context, index) {
+            if (index == _preferredSessionsTime.length) {
+              return ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _preferredSessionsTime.add({'start': '', 'end': ''});
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.teal, // Set the background color to teal
+                  foregroundColor: Colors.white, // Set the text color to white
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
+                        8), // Optional: Add rounded corners
+                  ),
+                ),
+                child: Text(
+                  'Add Time Frame',
+                  style: GoogleFonts.indieFlower(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            }
+            final session = _preferredSessionsTime[index];
+            return Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    readOnly: true,
+                    controller: TextEditingController(text: session['start']),
+                    decoration: InputDecoration(labelText: 'Start Time'),
+                    onTap: () async {
+                      TimeOfDay? time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (time != null) {
+                        setState(() {
+                          session['start'] = time.format(context);
+                        });
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextFormField(
+                    readOnly: true,
+                    controller: TextEditingController(text: session['end']),
+                    decoration: InputDecoration(labelText: 'End Time'),
+                    onTap: () async {
+                      TimeOfDay? time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (time != null) {
+                        setState(() {
+                          session['end'] = time.format(context);
+                        });
+                      }
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                      _preferredSessionsTime.removeAt(index);
+                    });
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMultiSelectField(String label, List<String> options,
+      ValueChanged<List<String>> onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
         Wrap(
           spacing: 10,
           children: options.map((option) {
-            final bool isSelected = selectedValues.contains(option);
+            final isSelected = _selectedDayAvailability.contains(option);
             return ChoiceChip(
               label: Text(
                 option,
@@ -332,11 +389,11 @@ class _SetBookingProfileState extends State<SetBookingProfile> {
               onSelected: (isSelected) {
                 setState(() {
                   if (isSelected) {
-                    selectedValues.add(option);
+                    _selectedDayAvailability.add(option);
                   } else {
-                    selectedValues.remove(option);
+                    _selectedDayAvailability.remove(option);
                   }
-                  onChanged(selectedValues);
+                  onChanged(_selectedDayAvailability);
                 });
               },
               selectedColor: Colors.teal,

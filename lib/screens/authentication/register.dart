@@ -85,7 +85,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 20),
+          Text(
+            "*Required",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
           TextFormField(
             controller: _firstNameController,
             cursorColor: Colors.black54,
@@ -110,7 +113,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
+          Text(
+            "*Required",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
           TextFormField(
             controller: _lastNameController,
             cursorColor: Colors.black54,
@@ -135,7 +141,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
+          Text(
+            "*Required",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
           TextFormField(
             controller: _emailController,
             cursorColor: Colors.black54,
@@ -160,7 +169,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
+          Text(
+            "*Required",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
           TextFormField(
             controller: _passwordController,
             cursorColor: Colors.black54,
@@ -207,7 +219,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
+          Text(
+            "Password: 8+ chars, 1 uppercase, 1 lowercase, 1 digit, 1 special.",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "*Required",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
           TextFormField(
             controller: _confirmPasswordController,
             cursorColor: Colors.black54,
@@ -244,7 +264,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
+          Text(
+            "*Required",
+            style: GoogleFonts.roboto(color: Colors.blue, fontSize: 12),
+          ),
           ElevatedButton(
             onPressed: _isLoading
                 ? null
@@ -621,7 +644,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         // Send email verification
         await userCredential.user!.sendEmailVerification();
-        
+
         String? fcmToken = await FirebaseMessaging.instance.getToken();
 
         // Save user data in the database

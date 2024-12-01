@@ -24,24 +24,25 @@ class _BookedTuteesState extends State<BookedTutees> {
 
   Future<List<Map<String, dynamic>>> _fetchBookedTutees() async {
     String tutorId = _auth.currentUser!.uid;
-    DatabaseReference bookingsRef = FirebaseDatabase.instance.ref('Bookings');
+    DatabaseReference bookingsRef =
+        FirebaseDatabase.instance.ref('Bookings/$tutorId');
 
     DataSnapshot bookingsSnapshot = await bookingsRef.get();
 
     List<Map<String, dynamic>> bookedTutees = [];
 
     if (bookingsSnapshot.exists) {
-      Map<dynamic, dynamic> bookingsMap =
+      Map<dynamic, dynamic> studentBookings =
           bookingsSnapshot.value as Map<dynamic, dynamic>;
 
-      if (bookingsMap.containsKey(tutorId)) {
-        Map<dynamic, dynamic>? tutorBookings =
-            bookingsMap[tutorId] as Map<dynamic, dynamic>?;
+      for (var studentId in studentBookings.keys) {
+        Map<dynamic, dynamic>? bookingEntries =
+            studentBookings[studentId] as Map<dynamic, dynamic>?;
 
-        if (tutorBookings != null) {
-          for (var studentId in tutorBookings.keys) {
+        if (bookingEntries != null) {
+          for (var bookingId in bookingEntries.keys) {
             Map<dynamic, dynamic>? bookingInfo =
-                tutorBookings[studentId] as Map<dynamic, dynamic>?;
+                bookingEntries[bookingId] as Map<dynamic, dynamic>?;
 
             if (bookingInfo != null) {
               DatabaseReference tuteeProfileRef =
@@ -54,6 +55,7 @@ class _BookedTuteesState extends State<BookedTutees> {
 
                 bookedTutees.add({
                   'studentId': studentId,
+                  'bookingId': bookingId,
                   'profile': Map<String, dynamic>.from(tuteeProfile),
                   'booking': Map<String, dynamic>.from(bookingInfo),
                 });
@@ -137,6 +139,308 @@ class _BookedTuteesState extends State<BookedTutees> {
     }
   }
 
+  void _showScheduleDialog(String tutorId, String studentId, String bookingId) {
+    DateTime? selectedDate;
+    TimeOfDay? startTime;
+    TimeOfDay? endTime;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Schedule Booking'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    title: Text(selectedDate == null
+                        ? 'Select Date'
+                        : 'Date: ${selectedDate!.toLocal().toString().split(' ')[0]}'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          selectedDate = pickedDate;
+                        });
+                      }
+                    },
+                  ),
+                  ListTile(
+                    title: Text(startTime == null
+                        ? 'Select Start Time'
+                        : 'Start Time: ${startTime!.format(context)}'),
+                    trailing: const Icon(Icons.access_time),
+                    onTap: () async {
+                      TimeOfDay? pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (pickedTime != null) {
+                        setState(() {
+                          startTime = pickedTime;
+                        });
+                      }
+                    },
+                  ),
+                  ListTile(
+                    title: Text(endTime == null
+                        ? 'Select End Time'
+                        : 'End Time: ${endTime!.format(context)}'),
+                    trailing: const Icon(Icons.access_time),
+                    onTap: () async {
+                      TimeOfDay? pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (pickedTime != null) {
+                        setState(() {
+                          endTime = pickedTime;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (selectedDate == null ||
+                        startTime == null ||
+                        endTime == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select date and time'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final scheduleDate =
+                        selectedDate!.toLocal().toString().split(' ')[0];
+                    final scheduleStartTime =
+                        '${startTime!.hour}:${startTime!.minute}';
+                    final scheduleEndTime =
+                        '${endTime!.hour}:${endTime!.minute}';
+
+                    Navigator.of(context).pop();
+                    _scheduleBooking(tutorId, studentId, bookingId,
+                        scheduleDate, scheduleStartTime, scheduleEndTime);
+                  },
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _scheduleBooking(
+      String tutorId,
+      String studentId,
+      String bookingId,
+      String scheduleDate,
+      String scheduleStartTime,
+      String scheduleEndTime) async {
+    try {
+      // Reference the specific booking using the bookingId
+      DatabaseReference bookingRef = FirebaseDatabase.instance
+          .ref('Bookings/$tutorId/$studentId/$bookingId');
+
+      // Update booking details
+      await bookingRef.update({
+        'scheduleDate': scheduleDate,
+        'scheduleStartTime': scheduleStartTime,
+        'scheduleEndTime': scheduleEndTime,
+        'status': 'Scheduled',
+      });
+
+      // Fetch booking data for push notification
+      DataSnapshot bookingSnapshot = await bookingRef.get();
+      var bookingData = bookingSnapshot.value;
+
+      if (bookingData != null && bookingData is Map) {
+        String? tuteeFcmToken = bookingData['tutee_fcmToken'];
+        if (tuteeFcmToken != null) {
+          // Fetch tutor data
+          DatabaseReference tutorRef =
+              FirebaseDatabase.instance.ref('tutors/$tutorId');
+          DataSnapshot tutorSnapshot = await tutorRef.get();
+          var tutorData = tutorSnapshot.value;
+
+          if (tutorData != null && tutorData is Map) {
+            String tutorFirstName = tutorData['firstName'] ?? 'Tutor';
+            String tutorLastName = tutorData['lastName'] ?? 'Name';
+
+            // Send a push notification to notify the tutee of the scheduled session
+            await _sendPushNotification(
+              tuteeFcmToken: tuteeFcmToken,
+              title: "Tutorial Scheduled",
+              body:
+                  "Your tutorial session has been scheduled with $tutorFirstName $tutorLastName on $scheduleDate from $scheduleStartTime to $scheduleEndTime.",
+            );
+
+            // // Schedule a push notification for when the session starts
+            // DateTime startDateTime = DateTime.parse(
+            //     "$scheduleDate $scheduleStartTime:00"); // Combine date and time
+            // Duration timeUntilSession = startDateTime.difference(DateTime.now());
+
+            // if (timeUntilSession.inSeconds > 0) {
+            //   // Schedule the push notification
+            //   Future.delayed(timeUntilSession, () async {
+            //     await _sendPushNotification(
+            //       tuteeFcmToken: tuteeFcmToken,
+            //       title: "Session Starting Soon",
+            //       body:
+            //           "Your tutorial session with $tutorFirstName $tutorLastName is starting now.",
+            //     );
+            //   });
+            // }
+          } else {
+            throw "Tutor data not available.";
+          }
+        } else {
+          throw "Tutee FCM token is missing.";
+        }
+      } else {
+        throw "Booking data not found.";
+      }
+
+      // Notify user of successful schedule creation
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Schedule Submitted!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error Scheduling: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to Schedule: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showCancelDialog(String tutorId, String studentId, String bookingId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cancel Booking'),
+          content: const Text('Are you sure you want to cancel the booking?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestCancelBooking(tutorId, studentId, bookingId);
+              },
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _requestCancelBooking(
+      String tutorId, String studentId, String bookingId) async {
+    try {
+      // Reference the specific booking using the bookingId
+      DatabaseReference bookingRef = FirebaseDatabase.instance
+          .ref('Bookings/$tutorId/$studentId/$bookingId');
+
+      await bookingRef.update({
+        'status': 'Cancelled',
+      });
+      setState(() {});
+
+      // Fetch tutor data from Firebase
+      DatabaseReference tutorRef =
+          FirebaseDatabase.instance.ref('tutors/$tutorId');
+      DataSnapshot tutorSnapshot = await tutorRef.get();
+      var tutorData = tutorSnapshot.value;
+
+      // Get the booking data to retrieve the FCM token
+      DataSnapshot bookingSnapshot = await bookingRef.get();
+      var bookingData = bookingSnapshot.value;
+
+      if (bookingData != null && bookingData is Map) {
+        // Safely retrieve FCM token from the booking data
+        String? tuteeFcmToken = bookingData['tutee_fcmToken'];
+
+        if (tuteeFcmToken != null) {
+          // Check if tutorData is not null and retrieve values safely
+          if (tutorData != null && tutorData is Map) {
+            String tutorFirstName = tutorData['firstName'] ?? 'Tutor';
+            String tutorLastName = tutorData['lastName'] ?? 'Name';
+
+            // Send push notification
+            await _sendPushNotification(
+              tuteeFcmToken: tuteeFcmToken,
+              title: "Booking Cancelled!",
+              body:
+                  "Your booking from tutor: $tutorFirstName $tutorLastName. has been cancelled",
+            );
+          } else {
+            // Handle case where tutor data is null or not in expected format
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: Tutor data is not available')),
+            );
+          }
+        } else {
+          // Handle case where FCM token is missing
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('FCM token is missing for this booking')),
+          );
+        }
+      } else {
+        // Handle case where booking data is null or in an unexpected format
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Error: Booking data is not in the expected format')),
+        );
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cancellation Request Submitted!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('Error requesting cancellation: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to request cancellation')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,10 +509,10 @@ class _BookedTuteesState extends State<BookedTutees> {
             }
 
             Future<void> updateBookingStatus(
-                String studentId, String newStatus) async {
+                String studentId, String newStatus, String bookingId) async {
               String tutorId = _auth.currentUser!.uid;
-              DatabaseReference bookingRef =
-                  FirebaseDatabase.instance.ref('Bookings/$tutorId/$studentId');
+              DatabaseReference bookingRef = FirebaseDatabase.instance
+                  .ref('Bookings/$tutorId/$studentId/$bookingId');
 
               try {
                 // Update the status in the database
@@ -256,6 +560,65 @@ class _BookedTuteesState extends State<BookedTutees> {
                           title: "Booking Approved!",
                           body:
                               "Your booking request has been approved by your tutor: $tutorFirstName $tutorLastName.",
+                        );
+                      } else {
+                        // Handle case where tutor data is null or not in expected format
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Error: Tutor data is not available')),
+                        );
+                      }
+                    } else {
+                      // Handle case where FCM token is missing
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text('FCM token is missing for this booking')),
+                      );
+                    }
+                  } else {
+                    // Handle case where booking data is null or in an unexpected format
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text(
+                              'Error: Booking data is not in the expected format')),
+                    );
+                  }
+                }
+
+                // If the status is approved, send a push notification
+                if (newStatus == 'Finished') {
+                  // Fetch tutor data from Firebase
+                  DatabaseReference tutorRef =
+                      FirebaseDatabase.instance.ref('tutors/$tutorId');
+                  DataSnapshot tutorSnapshot = await tutorRef.get();
+                  var tutorData = tutorSnapshot.value;
+
+                  // Get the booking data to retrieve the FCM token
+                  DataSnapshot bookingSnapshot = await bookingRef.get();
+                  var bookingData = bookingSnapshot.value;
+
+                  // Log the booking data for debugging
+                  print("Booking Data: $bookingData");
+
+                  if (bookingData != null && bookingData is Map) {
+                    // Safely retrieve FCM token from the booking data
+                    String? tuteeFcmToken = bookingData['tutee_fcmToken'];
+
+                    if (tuteeFcmToken != null) {
+                      // Check if tutorData is not null and retrieve values safely
+                      if (tutorData != null && tutorData is Map) {
+                        String tutorFirstName =
+                            tutorData['firstName'] ?? 'Tutor';
+                        String tutorLastName = tutorData['lastName'] ?? 'Name';
+
+                        // Send push notification
+                        await _sendPushNotification(
+                          tuteeFcmToken: tuteeFcmToken,
+                          title: "Booking Completed!",
+                          body:
+                              "Your booking from tutor: $tutorFirstName $tutorLastName. is marked as Complete",
                         );
                       } else {
                         // Handle case where tutor data is null or not in expected format
@@ -334,139 +697,232 @@ class _BookedTuteesState extends State<BookedTutees> {
                 final tutee = bookedTutees[index]['profile'];
                 final booking = bookedTutees[index]['booking'];
                 final studentId = bookedTutees[index]['studentId'];
+                final bookingId = bookedTutees[index]['bookingId'];
 
                 return Card(
                   elevation: 4,
                   shadowColor: Colors.black12,
                   margin:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.teal,
-                      child: Text(
-                        tutee['firstName'] != null
-                            ? tutee['firstName'][0]
-                            : 'T',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    title: Text(
-                      "${tutee['firstName'] ?? 'First Name'} ${tutee['lastName'] ?? 'Last Name'}",
-                      style: GoogleFonts.indieFlower(
-                          color: Colors.teal,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20),
-                    ),
-                    subtitle: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.all(
+                        10.0), // Added padding to give extra space
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Status: ${booking['status']}",
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        Text(
-                          "Booked on: ${_formatTimestamp(booking['timestamp'])}",
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (booking['status'] == 'Pending') ...[
-                          IconButton(
-                            icon: const Icon(Iconsax.tick_circle,
-                                color: Colors.green),
-                            onPressed: () {
-                              showConfirmationDialog(
-                                context,
-                                title: 'Approve Booking',
-                                content:
-                                    'Are you sure you want to approve this booking?',
-                                onConfirm: () async {
-                                  await updateBookingStatus(
-                                      studentId, 'Approved');
-                                  setState(() {});
-                                },
-                              );
-                            },
+                        ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.teal,
+                            child: Text(
+                              tutee['firstName'] != null
+                                  ? tutee['firstName'][0]
+                                  : 'T',
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Iconsax.close_circle,
-                                color: Colors.red),
-                            onPressed: () {
-                              showConfirmationDialog(
-                                context,
-                                title: 'Cancel Booking',
-                                content:
-                                    'Are you sure you want to cancel this booking?',
-                                onConfirm: () async {
-                                  DatabaseReference bookingRef =
-                                      FirebaseDatabase.instance.ref(
-                                          'Bookings/${_auth.currentUser!.uid}/$studentId');
-
-                                  bookingRef
-                                      .update({'isRequestingCancel': true});
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Center(
-                                          child: Text(
-                                              'Cancellation Request Submitted!')),
-                                      backgroundColor: Colors.green,
+                          title: Text(
+                            "${tutee['firstName'] ?? 'First Name'} ${tutee['lastName'] ?? 'Last Name'}",
+                            style: GoogleFonts.indieFlower(
+                                color: Colors.teal,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Status: ${booking['status']}",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                "Booked on: ${_formatTimestamp(booking['timestamp'])}",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            if (booking['status'] == 'Pending') ...[
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.tick_circle,
+                                        color: Colors.green),
+                                    onPressed: () {
+                                      showConfirmationDialog(
+                                        context,
+                                        title: 'Approve Booking',
+                                        content:
+                                            'Are you sure you want to approve this booking?',
+                                        onConfirm: () async {
+                                          await updateBookingStatus(
+                                            studentId,
+                                            'Approved',
+                                            bookingId,
+                                          );
+                                          setState(() {});
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Accept',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.green,
                                     ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ] else if (booking['status'] == 'Approved') ...[
-                          IconButton(
-                            icon: const Icon(Iconsax.book),
-                            onPressed: () {
-                              if (studentId != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        TutorLearningMaterialsScreen(
-                                            studentId: studentId),
                                   ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Error: Student ID is missing')),
-                                );
-                              }
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Iconsax.message),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ChatScreen(
-                                    tutorId: _auth.currentUser!.uid,
-                                    studentId: studentId,
+                                ],
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.close_circle,
+                                        color: Colors.red),
+                                    onPressed: () {
+                                      _showCancelDialog(
+                                        _auth.currentUser!.uid,
+                                        studentId,
+                                        bookingId,
+                                      );
+                                    },
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                        ] else if (booking['status'] == 'Rejected') ...[
-                          const Icon(Iconsax.close_circle, color: Colors.red),
-                          const SizedBox(width: 8),
-                          const Text('Rejected',
-                              style: TextStyle(color: Colors.red)),
-                        ] else if (booking['status'] == 'Cancelled') ...[
-                          const Icon(Iconsax.close_circle, color: Colors.red),
-                          const SizedBox(width: 8),
-                          const Text('Cancelled',
-                              style: TextStyle(color: Colors.red)),
-                        ],
+                                  const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ] else if (booking['status'] == 'Approved' ||
+                                booking['status'] == 'Scheduled') ...[
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.document,
+                                        color: Colors.teal),
+                                    onPressed: () {
+                                      _showScheduleDialog(
+                                        _auth.currentUser!.uid,
+                                        studentId,
+                                        bookingId,
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Schedule',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.check,
+                                        color: Colors.green),
+                                    onPressed: () {
+                                      showConfirmationDialog(
+                                        context,
+                                        title: 'Finish Booking',
+                                        content:
+                                            "This can't be undone. Are you sure you want to mark this booking as Completed/Finished?",
+                                        onConfirm: () async {
+                                          await updateBookingStatus(
+                                            studentId,
+                                            'Finished',
+                                            bookingId,
+                                          );
+                                          setState(() {});
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Mark as Complete',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.green,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.book,
+                                        color: Colors.teal),
+                                    onPressed: () {
+                                      if (studentId != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                TutorLearningMaterialsScreen(
+                                                    studentId: studentId),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Error: Student ID is missing')),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                  const Text(
+                                    'Learning Materials',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.message,
+                                        color: Colors.teal),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ChatScreen(
+                                            tutorId: _auth.currentUser!.uid,
+                                            studentId: studentId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Message',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),

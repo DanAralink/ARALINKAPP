@@ -34,51 +34,66 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
           bookingsSnapshot.value as Map<dynamic, dynamic>;
 
       for (var tutorId in bookingsMap.keys) {
-        Map<dynamic, dynamic>? tutorBookings =
+        Map<dynamic, dynamic>? studentBookings =
             bookingsMap[tutorId] as Map<dynamic, dynamic>?;
 
-        if (tutorBookings != null && tutorBookings.containsKey(studentId)) {
-          Map<dynamic, dynamic>? bookingInfo =
-              tutorBookings[studentId] as Map<dynamic, dynamic>?;
+        if (studentBookings != null && studentBookings.containsKey(studentId)) {
+          Map<dynamic, dynamic>? bookingEntries =
+              studentBookings[studentId] as Map<dynamic, dynamic>?;
 
-          if (bookingInfo != null) {
-            print(
-                'Booking found for Tutor ID: $tutorId by Student: $studentId');
+          if (bookingEntries != null) {
+            for (var bookingId in bookingEntries.keys) {
+              Map<dynamic, dynamic>? bookingInfo =
+                  bookingEntries[bookingId] as Map<dynamic, dynamic>?;
 
-            DatabaseReference tutorProfileRef =
-                FirebaseDatabase.instance.ref('tutor_profiles/$tutorId');
-            DataSnapshot tutorProfileSnapshot = await tutorProfileRef.get();
+              if (bookingInfo != null) {
+                print(
+                    'Booking found for Tutor ID: $tutorId, Booking ID: $bookingId');
 
-            if (tutorProfileSnapshot.exists) {
-              Map<dynamic, dynamic> tutorProfile =
-                  tutorProfileSnapshot.value as Map<dynamic, dynamic>;
+                // Fetch tutor profile
+                DatabaseReference tutorProfileRef =
+                    FirebaseDatabase.instance.ref('tutor_profiles/$tutorId');
+                DataSnapshot tutorProfileSnapshot = await tutorProfileRef.get();
 
-              DatabaseReference tutorDetailsRef =
-                  FirebaseDatabase.instance.ref('tutors/$tutorId');
-              DataSnapshot tutorDetailsSnapshot = await tutorDetailsRef.get();
+                if (tutorProfileSnapshot.exists) {
+                  Map<dynamic, dynamic> tutorProfile =
+                      tutorProfileSnapshot.value as Map<dynamic, dynamic>;
 
-              if (tutorDetailsSnapshot.exists) {
-                Map<dynamic, dynamic> tutorDetails =
-                    tutorDetailsSnapshot.value as Map<dynamic, dynamic>;
+                  // Fetch tutor details
+                  DatabaseReference tutorDetailsRef =
+                      FirebaseDatabase.instance.ref('tutors/$tutorId');
+                  DataSnapshot tutorDetailsSnapshot =
+                      await tutorDetailsRef.get();
 
-                bookedTutors.add({
-                  'tutorId': tutorId,
-                  'profile': Map<String, dynamic>.from(tutorProfile),
-                  'details': Map<String, dynamic>.from(tutorDetails),
-                  'booking': Map<String, dynamic>.from(bookingInfo),
-                });
+                  if (tutorDetailsSnapshot.exists) {
+                    Map<dynamic, dynamic> tutorDetails =
+                        tutorDetailsSnapshot.value as Map<dynamic, dynamic>;
+
+                    bookedTutors.add({
+                      'tutorId': tutorId,
+                      'profile': Map<String, dynamic>.from(tutorProfile),
+                      'details': Map<String, dynamic>.from(tutorDetails),
+                      'booking': {
+                        'bookingId': bookingId,
+                        ...Map<String, dynamic>.from(bookingInfo),
+                      },
+                    });
+                  } else {
+                    print('No details found for Tutor ID: $tutorId');
+                  }
+                } else {
+                  print('No profile found for Tutor ID: $tutorId');
+                }
               } else {
-                print('No details found for Tutor ID: $tutorId');
+                print('No valid booking info for Booking ID: $bookingId');
               }
-            } else {
-              print('No profile found for Tutor ID: $tutorId');
             }
           } else {
-            print('No valid booking info for Tutor ID: $tutorId');
+            print('No booking entries found for Student ID: $studentId');
           }
         } else {
           print(
-              'No bookings found for Tutor ID: $tutorId or TutorBookings is null');
+              'No bookings found for Tutor ID: $tutorId or Student ID: $studentId');
         }
       }
     } else {
@@ -88,26 +103,26 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
     return bookedTutors;
   }
 
-  void _showCancelDialog(String tutorId, String studentId) {
+  void _showCancelDialog(String tutorId, String studentId, String bookingId) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Cancel Booking'),
-          content: Text('Are you sure you want to cancel the booking?'),
+          title: const Text('Cancel Booking'),
+          content: const Text('Are you sure you want to cancel the booking?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('No'),
+              child: const Text('No'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _requestCancelBooking(tutorId, studentId);
+                _requestCancelBooking(tutorId, studentId, bookingId);
               },
-              child: Text('Yes'),
+              child: const Text('Yes'),
             ),
           ],
         );
@@ -115,25 +130,28 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
     );
   }
 
-  Future<void> _requestCancelBooking(String tutorId, String studentId) async {
+  Future<void> _requestCancelBooking(
+      String tutorId, String studentId, String bookingId) async {
     try {
-      DatabaseReference bookingRef =
-          FirebaseDatabase.instance.ref('Bookings/$tutorId/$studentId');
+      // Reference the specific booking using the bookingId
+      DatabaseReference bookingRef = FirebaseDatabase.instance
+          .ref('Bookings/$tutorId/$studentId/$bookingId');
 
       await bookingRef.update({
-        'isRequestingCancel': true,
+        'status': 'Cancelled',
       });
+      setState(() {});
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Center(child: Text('Cancellation Request Submitted!')),
+        const SnackBar(
+          content: Text('Cancellation Request Submitted!'),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       print('Error requesting cancellation: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to request cancellation')),
+        const SnackBar(content: Text('Failed to request cancellation')),
       );
     }
   }
@@ -151,25 +169,6 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: feedbackController,
-                decoration: InputDecoration(
-                  hintStyle: GoogleFonts.indieFlower(color: Colors.black54),
-                  hintText: "Enter your feedback",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide.none,
-                  ),
-                  fillColor: Colors.black.withOpacity(0.2),
-                  filled: true,
-                  prefixIcon: const Icon(
-                    Iconsax.lock,
-                    color: Colors.white,
-                  ),
-                ),
-                maxLines: 4,
-              ),
-              const SizedBox(height: 10),
               const Text("Rate Tutor:"),
               RatingBar.builder(
                 initialRating: 3,
@@ -194,7 +193,10 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text("Cancel", style: TextStyle(color: Colors.grey),),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
             TextButton(
               style: TextButton.styleFrom(
@@ -204,11 +206,13 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
               ),
               onPressed: () {
                 // Save the feedback to Firebase Realtime Database
-                _saveFeedbackToFirebase(
-                    feedbackController.text, rating, tutorId, currentDate);
+                _saveFeedbackToFirebase(rating, tutorId, currentDate);
                 Navigator.of(context).pop();
               },
-              child: const Text("Submit", style: TextStyle(color: Colors.black),),
+              child: const Text(
+                "Submit",
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         );
@@ -217,8 +221,7 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
   }
 
   // Save the feedback to Firebase Realtime Database
-  void _saveFeedbackToFirebase(
-      String feedbackMessage, double rating, String tutorId, DateTime date) {
+  void _saveFeedbackToFirebase(double rating, String tutorId, DateTime date) {
     // Get the current user's ID from FirebaseAuth
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -237,7 +240,6 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
     feedbackRef.push().set({
       'tutorId': tutorId,
       'tuteeId': userId,
-      'feedbackMessage': feedbackMessage,
       'ratings': rating,
       'dateCreated': date.millisecondsSinceEpoch,
     }).then((_) {
@@ -376,67 +378,101 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             if (booking['status'] == 'Pending')
-                              IconButton(
-                                icon: const Icon(Iconsax.close_circle,
-                                    color: Colors.red),
-                                onPressed: () {
-                                  _showCancelDialog(
-                                      bookedTutors[index]['tutorId'],
-                                      studentId);
-                                },
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.close_circle,
+                                        color: Colors.red),
+                                    onPressed: () {
+                                      _showCancelDialog(
+                                        bookedTutors[index]['tutorId'],
+                                        studentId,
+                                        booking['bookingId'], // Pass bookingId
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: 10, // Small text size
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
                               ),
                             if (booking['status'] == 'Approved') ...[
-                              IconButton(
-                                icon: const Icon(Iconsax.book),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          LearningMaterialsScreen(
-                                              userId: studentId),
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.book),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              LearningMaterialsScreen(
+                                                  userId: studentId),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Learning Materials',
+                                    style: TextStyle(
+                                      fontSize: 10, // Small text size
+                                      color: Colors.teal,
                                     ),
-                                  );
-                                },
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Iconsax.message),
-                                onPressed: () {
-                                  String tutorId =
-                                      bookedTutors[index]['tutorId'];
-                                  // Navigate to the ChatScreen
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ChatScreen(
-                                        studentId: _auth.currentUser!.uid,
-                                        tutorId: tutorId,
-                                      ),
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.message),
+                                    onPressed: () {
+                                      String tutorId =
+                                          bookedTutors[index]['tutorId'];
+                                      // Navigate to the ChatScreen
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ChatScreen(
+                                            studentId: _auth.currentUser!.uid,
+                                            tutorId: tutorId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const Text(
+                                    'Message',
+                                    style: TextStyle(
+                                      fontSize: 10, // Small text size
+                                      color: Colors.teal,
                                     ),
-                                  );
-                                },
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Iconsax.heart),
-                                onPressed: () {
-                                  String tutorId =
-                                      bookedTutors[index]['tutorId'];
-                                  _showFeedbackDialog(
-                                      context, tutorId); // Show feedback dialog
-                                },
+                              Column(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Iconsax.heart),
+                                    onPressed: () {
+                                      String tutorId =
+                                          bookedTutors[index]['tutorId'];
+                                      _showFeedbackDialog(context,
+                                          tutorId); // Show feedback dialog
+                                    },
+                                  ),
+                                  const Text(
+                                    'Feedback',
+                                    style: TextStyle(
+                                      fontSize: 10, // Small text size
+                                      color: Colors.teal,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ] else if (booking['status'] == 'Rejected') ...[
-                              const Icon(Iconsax.close_circle,
-                                  color: Colors.red),
-                              const SizedBox(width: 8),
-                              const Text('Rejected',
-                                  style: TextStyle(color: Colors.red)),
-                            ] else if (booking['status'] == 'Cancelled') ...[
-                              const Icon(Iconsax.close_circle,
-                                  color: Colors.red),
-                              const SizedBox(width: 8),
-                              const Text('Cancelled',
-                                  style: TextStyle(color: Colors.red)),
                             ],
                           ],
                         ),

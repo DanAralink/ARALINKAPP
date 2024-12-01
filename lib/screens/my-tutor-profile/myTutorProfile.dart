@@ -126,12 +126,39 @@ class _MyTutorProfileState extends State<MyTutorProfile> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '${firstName ?? 'Loading...'} ${lastName ?? ''}',
-                    style: GoogleFonts.indieFlower(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22),
+               Row(
+                    mainAxisAlignment: MainAxisAlignment
+                        .center, // Centers the content horizontally
+                    children: [
+                      Text(
+                        '${firstName ?? 'Loading...'} ${lastName ?? ''}',
+                        style: GoogleFonts.indieFlower(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22),
+                      ),
+                      const SizedBox(
+                          width:
+                              8), // Space between the name and "Verified" label
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(
+                              0.3), // Background color with transparency
+                          borderRadius:
+                              BorderRadius.circular(12), // Rounded corners
+                        ),
+                        child: Text(
+                          "Verified",
+                          style: GoogleFonts.roboto(
+                            color: Colors.blue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Text(
                     email ?? 'Loading...',
