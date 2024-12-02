@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:aralink_app/services/mail_service.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:googleapis_auth/googleapis_auth.dart';
@@ -368,78 +369,92 @@ class _BookedTuteesState extends State<BookedTutees> {
   }
 
   Future<void> _requestCancelBooking(
-      String tutorId, String studentId, String bookingId) async {
-    try {
-      // Reference the specific booking using the bookingId
-      DatabaseReference bookingRef = FirebaseDatabase.instance
-          .ref('Bookings/$tutorId/$studentId/$bookingId');
+    String tutorId, String studentId, String bookingId) async {
+  try {
+    // Reference the specific booking using the bookingId
+    DatabaseReference bookingRef = FirebaseDatabase.instance
+        .ref('Bookings/$tutorId/$studentId/$bookingId');
 
-      await bookingRef.update({
-        'status': 'Cancelled',
-      });
-      setState(() {});
+    await bookingRef.update({'status': 'Cancelled'});
+    setState(() {});
 
-      // Fetch tutor data from Firebase
-      DatabaseReference tutorRef =
-          FirebaseDatabase.instance.ref('tutors/$tutorId');
-      DataSnapshot tutorSnapshot = await tutorRef.get();
-      var tutorData = tutorSnapshot.value;
+    // Fetch tutor data from Firebase
+    DatabaseReference tutorRef =
+        FirebaseDatabase.instance.ref('tutors/$tutorId');
+    DataSnapshot tutorSnapshot = await tutorRef.get();
+    var tutorData = tutorSnapshot.value;
 
-      // Get the booking data to retrieve the FCM token
-      DataSnapshot bookingSnapshot = await bookingRef.get();
-      var bookingData = bookingSnapshot.value;
+    // Get the booking data to retrieve the FCM token and email addresses
+    DataSnapshot bookingSnapshot = await bookingRef.get();
+    var bookingData = bookingSnapshot.value;
 
-      if (bookingData != null && bookingData is Map) {
-        // Safely retrieve FCM token from the booking data
-        String? tuteeFcmToken = bookingData['tutee_fcmToken'];
+    if (bookingData != null && bookingData is Map) {
+      // Safely retrieve required data
+      String? tuteeFcmToken = bookingData['fcmToken'];
+      String? tuteeEmail = bookingData['email'];
+      String? tutorEmail = bookingData['email'];
 
-        if (tuteeFcmToken != null) {
-          // Check if tutorData is not null and retrieve values safely
-          if (tutorData != null && tutorData is Map) {
-            String tutorFirstName = tutorData['firstName'] ?? 'Tutor';
-            String tutorLastName = tutorData['lastName'] ?? 'Name';
+      if (tuteeFcmToken != null && tuteeEmail != null && tutorEmail != null) {
+        // Check if tutorData is not null and retrieve values safely
+        if (tutorData != null && tutorData is Map) {
+          String tutorFirstName = tutorData['firstName'] ?? 'Tutor';
+          String tutorLastName = tutorData['lastName'] ?? 'Name';
 
-            // Send push notification
-            await _sendPushNotification(
-              tuteeFcmToken: tuteeFcmToken,
-              title: "Booking Cancelled!",
-              body:
-                  "Your booking from tutor: $tutorFirstName $tutorLastName. has been cancelled",
-            );
-          } else {
-            // Handle case where tutor data is null or not in expected format
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: Tutor data is not available')),
-            );
-          }
+          // Send push notification
+          await _sendPushNotification(
+            tuteeFcmToken: tuteeFcmToken,
+            title: "Booking Cancelled!",
+            body:
+                "Your booking with tutor: $tutorFirstName $tutorLastName has been cancelled.",
+          );
+
+          // Send email notifications
+          // Email to tutee
+          await MailService.instance.sendMail(
+            'Hi,\n\nYour booking with tutor $tutorFirstName $tutorLastName has been cancelled. Please contact the tutor for further details.\n\nBest Regards,\nTutor Booking App',
+            'Booking Cancelled',
+            tuteeEmail,
+          );
+
+          // Email to tutor
+          await MailService.instance.sendMail(
+            'Hi,\n\nThe booking from tutee ID: $studentId has been cancelled. Please check your schedule for updates.\n\nBest Regards,\nTutor Booking App',
+            'Booking Cancelled',
+            tutorEmail,
+          );
         } else {
-          // Handle case where FCM token is missing
+          // Handle case where tutor data is null or not in expected format
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('FCM token is missing for this booking')),
+            SnackBar(content: Text('Error: Tutor data is not available')),
           );
         }
       } else {
-        // Handle case where booking data is null or in an unexpected format
+        // Handle case where required data is missing
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Error: Booking data is not in the expected format')),
+          SnackBar(content: Text('Required email or FCM token is missing')),
         );
       }
-
+    } else {
+      // Handle case where booking data is null or in an unexpected format
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cancellation Request Submitted!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      print('Error requesting cancellation: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to request cancellation')),
+        SnackBar(content: Text('Error: Booking data is not in the expected format')),
       );
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Cancellation Request Submitted!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  } catch (e) {
+    print('Error requesting cancellation: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to request cancellation')),
+    );
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -508,150 +523,111 @@ class _BookedTuteesState extends State<BookedTutees> {
               }
             }
 
-            Future<void> updateBookingStatus(
-                String studentId, String newStatus, String bookingId) async {
-              String tutorId = _auth.currentUser!.uid;
-              DatabaseReference bookingRef = FirebaseDatabase.instance
-                  .ref('Bookings/$tutorId/$studentId/$bookingId');
+Future<void> updateBookingStatus(
+    String studentId, String newStatus, String bookingId) async {
+  String tutorId = _auth.currentUser!.uid;
+  DatabaseReference bookingRef = FirebaseDatabase.instance
+      .ref('Bookings/$tutorId/$studentId/$bookingId');
 
-              try {
-                // Update the status in the database
-                await bookingRef.update({'status': newStatus});
+  try {
+    // Update the status in the database
+    await bookingRef.update({'status': newStatus});
 
-                // Show success notification for updating status
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Center(
-                      child: Text('Booking status updated to $newStatus'),
-                    ),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+    // Show success notification for updating status
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Center(
+          child: Text('Booking status updated to $newStatus'),
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-                // If the status is approved, send a push notification
-                if (newStatus == 'Approved') {
-                  // Fetch tutor data from Firebase
-                  DatabaseReference tutorRef =
-                      FirebaseDatabase.instance.ref('tutors/$tutorId');
-                  DataSnapshot tutorSnapshot = await tutorRef.get();
-                  var tutorData = tutorSnapshot.value;
+    // Fetch necessary data
+    var bookingSnapshot = await bookingRef.get();
+    var tutorSnapshot =
+        await FirebaseDatabase.instance.ref('tutors/$tutorId').get();
 
-                  // Get the booking data to retrieve the FCM token
-                  DataSnapshot bookingSnapshot = await bookingRef.get();
-                  var bookingData = bookingSnapshot.value;
+    if (!bookingSnapshot.exists || !tutorSnapshot.exists) {
+      throw Exception('Required data not found.');
+    }
 
-                  // Log the booking data for debugging
-                  print("Booking Data: $bookingData");
+    Map<String, dynamic> bookingData =
+        Map<String, dynamic>.from(bookingSnapshot.value as Map);
+    Map<String, dynamic> tutorData =
+        Map<String, dynamic>.from(tutorSnapshot.value as Map);
 
-                  if (bookingData != null && bookingData is Map) {
-                    // Safely retrieve FCM token from the booking data
-                    String? tuteeFcmToken = bookingData['tutee_fcmToken'];
+    String? tuteeFcmToken = bookingData['fcmToken'];
+    String? tuteeEmail = bookingData['email'];
+    String tutorFirstName = tutorData['firstName'] ?? 'Tutor';
+    String tutorLastName = tutorData['lastName'] ?? 'Name';
 
-                    if (tuteeFcmToken != null) {
-                      // Check if tutorData is not null and retrieve values safely
-                      if (tutorData != null && tutorData is Map) {
-                        String tutorFirstName =
-                            tutorData['firstName'] ?? 'Tutor';
-                        String tutorLastName = tutorData['lastName'] ?? 'Name';
+    if (tuteeFcmToken == null || tuteeEmail == null) {
+      throw Exception('Tutee FCM token or email is missing.');
+    }
 
-                        // Send push notification
-                        await _sendPushNotification(
-                          tuteeFcmToken: tuteeFcmToken,
-                          title: "Booking Approved!",
-                          body:
-                              "Your booking request has been approved by your tutor: $tutorFirstName $tutorLastName.",
-                        );
-                      } else {
-                        // Handle case where tutor data is null or not in expected format
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text('Error: Tutor data is not available')),
-                        );
-                      }
-                    } else {
-                      // Handle case where FCM token is missing
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('FCM token is missing for this booking')),
-                      );
-                    }
-                  } else {
-                    // Handle case where booking data is null or in an unexpected format
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Error: Booking data is not in the expected format')),
-                    );
-                  }
-                }
+    // Handle status-specific logic
+    if (newStatus == 'Approved') {
+      await _sendPushNotification(
+        tuteeFcmToken: tuteeFcmToken,
+        title: "Booking Approved!",
+        body:
+            "Your booking request has been approved by your tutor: $tutorFirstName $tutorLastName.",
+      );
 
-                // If the status is approved, send a push notification
-                if (newStatus == 'Finished') {
-                  // Fetch tutor data from Firebase
-                  DatabaseReference tutorRef =
-                      FirebaseDatabase.instance.ref('tutors/$tutorId');
-                  DataSnapshot tutorSnapshot = await tutorRef.get();
-                  var tutorData = tutorSnapshot.value;
+      await MailService.instance.sendMail(
+        'Hi,\n\nYour booking request with tutor $tutorFirstName $tutorLastName has been approved. Please proceed as discussed.\n\nBest Regards,\nTutor Booking App',
+        'Booking Approved',
+        tuteeEmail,
+      );
+    } else if (newStatus == 'Finished') {
+      await _sendPushNotification(
+        tuteeFcmToken: tuteeFcmToken,
+        title: "Booking Completed!",
+        body:
+            "Your booking with tutor: $tutorFirstName $tutorLastName has been marked as Complete.",
+      );
 
-                  // Get the booking data to retrieve the FCM token
-                  DataSnapshot bookingSnapshot = await bookingRef.get();
-                  var bookingData = bookingSnapshot.value;
+      await MailService.instance.sendMail(
+        'Hi,\n\nYour booking with tutor $tutorFirstName $tutorLastName has been successfully completed. Thank you for using Tutor Booking App.\n\nBest Regards,\nTutor Booking App',
+        'Booking Completed',
+        tuteeEmail,
+      );
+    } else if (newStatus == 'Scheduled') {
+      await _sendPushNotification(
+        tuteeFcmToken: tuteeFcmToken,
+        title: "Booking Scheduled!",
+        body:
+            "Your booking with tutor $tutorFirstName $tutorLastName has been scheduled. Please check your schedule for details.",
+      );
 
-                  // Log the booking data for debugging
-                  print("Booking Data: $bookingData");
+      await MailService.instance.sendMail(
+        'Hi,\n\nYour booking with tutor $tutorFirstName $tutorLastName has been scheduled. Please check your schedule for details.\n\nBest Regards,\nTutor Booking App',
+        'Booking Scheduled',
+        tuteeEmail,
+      );
+    } else if (newStatus == 'Cancelled') {
+      await _sendPushNotification(
+        tuteeFcmToken: tuteeFcmToken,
+        title: "Booking Cancelled",
+        body:
+            "Your booking with tutor $tutorFirstName $tutorLastName has been cancelled. Please contact your tutor for further details.",
+      );
 
-                  if (bookingData != null && bookingData is Map) {
-                    // Safely retrieve FCM token from the booking data
-                    String? tuteeFcmToken = bookingData['tutee_fcmToken'];
+      await MailService.instance.sendMail(
+        'Hi,\n\nYour booking with tutor $tutorFirstName $tutorLastName has been cancelled. Please contact your tutor for further details.\n\nBest Regards,\nTutor Booking App',
+        'Booking Cancelled',
+        tuteeEmail,
+      );
+    }
+  } catch (error) {
+    // Handle errors
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error updating status: $error')),
+    );
+  }
+}
 
-                    if (tuteeFcmToken != null) {
-                      // Check if tutorData is not null and retrieve values safely
-                      if (tutorData != null && tutorData is Map) {
-                        String tutorFirstName =
-                            tutorData['firstName'] ?? 'Tutor';
-                        String tutorLastName = tutorData['lastName'] ?? 'Name';
-
-                        // Send push notification
-                        await _sendPushNotification(
-                          tuteeFcmToken: tuteeFcmToken,
-                          title: "Booking Completed!",
-                          body:
-                              "Your booking from tutor: $tutorFirstName $tutorLastName. is marked as Complete",
-                        );
-                      } else {
-                        // Handle case where tutor data is null or not in expected format
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text('Error: Tutor data is not available')),
-                        );
-                      }
-                    } else {
-                      // Handle case where FCM token is missing
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('FCM token is missing for this booking')),
-                      );
-                    }
-                  } else {
-                    // Handle case where booking data is null or in an unexpected format
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Error: Booking data is not in the expected format')),
-                    );
-                  }
-                }
-              } catch (error) {
-                // Handle error if status update fails
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error updating status: $error')),
-                );
-              }
-            }
 
             void showConfirmationDialog(
               BuildContext context, {

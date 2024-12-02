@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:aralink_app/services/mail_service.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:googleapis_auth/googleapis_auth.dart';
+import 'package:http/http.dart' as http;
 
 class MyBookedTutors extends StatefulWidget {
   const MyBookedTutors({super.key});
@@ -130,29 +136,173 @@ class _MyBookedTutorsState extends State<MyBookedTutors> {
     );
   }
 
-  Future<void> _requestCancelBooking(
-      String tutorId, String studentId, String bookingId) async {
-    try {
-      // Reference the specific booking using the bookingId
-      DatabaseReference bookingRef = FirebaseDatabase.instance
-          .ref('Bookings/$tutorId/$studentId/$bookingId');
+Future<void> _requestCancelBooking(
+    String tutorId, String studentId, String bookingId) async {
+  try {
+    // Reference the specific booking using the bookingId
+    DatabaseReference bookingRef = FirebaseDatabase.instance
+        .ref('Bookings/$tutorId/$studentId/$bookingId');
 
-      await bookingRef.update({
-        'status': 'Cancelled',
-      });
-      setState(() {});
+    await bookingRef.update({'status': 'Cancelled'});
+    setState(() {});
 
+    // Fetch tutor data from Firebase
+    DatabaseReference tutorRef =
+        FirebaseDatabase.instance.ref('tutors/$tutorId');
+    DataSnapshot tutorSnapshot = await tutorRef.get();
+    var tutorData = tutorSnapshot.value;
+
+    // Get booking data to retrieve FCM token and email addresses
+    DataSnapshot bookingSnapshot = await bookingRef.get();
+    var bookingData = bookingSnapshot.value;
+
+    if (bookingData != null && bookingData is Map) {
+      // Safely retrieve required data
+      String? tuteeFcmToken = bookingData['fcmToken'];
+      String? tuteeEmail = bookingData['email'];
+      String? tutorEmail = bookingData['email'];
+
+      if (tuteeEmail != null && tutorEmail != null) {
+        if (tutorData != null && tutorData is Map) {
+          String tutorFirstName = tutorData['firstName'] ?? 'Tutor';
+          String tutorLastName = tutorData['lastName'] ?? 'Name';
+
+          // Email notification to the tutee
+          await MailService.instance.sendMail(
+            'Hi,\n\nYour booking with tutor $tutorFirstName $tutorLastName has been cancelled. Please contact the tutor for further details.\n\nBest Regards,\nTutor Booking App',
+            'Booking Cancelled',
+            tuteeEmail,
+          );
+
+          // Email notification to the tutor
+          await MailService.instance.sendMail(
+            'Hi,\n\nThe booking from student ID: $studentId has been cancelled. Please check your schedule for updates.\n\nBest Regards,\nTutor Booking App',
+            'Booking Cancelled',
+            tutorEmail,
+          );
+
+          // Optional: Send push notification if FCM token is available
+          if (tuteeFcmToken != null) {
+            await _sendPushNotification(
+              tuteeFcmToken: tuteeFcmToken,
+              title: "Booking Cancelled",
+              body:
+                  "Your booking with tutor $tutorFirstName $tutorLastName has been cancelled.",
+            );
+          }
+        } else {
+          // Handle case where tutor data is null or in an unexpected format
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Tutor data is not available.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        // Handle case where emails are missing
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Required email addresses are missing.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      // Handle case where booking data is null or malformed
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Cancellation Request Submitted!'),
-          backgroundColor: Colors.green,
+          content: Text('Error: Booking data is not in the expected format.'),
+          backgroundColor: Colors.red,
         ),
       );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Cancellation Request Submitted!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  } catch (e) {
+    print('Error requesting cancellation: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Failed to request cancellation.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+
+Future<String> _getAccessToken() async {
+    try {
+      final serviceAccountKey =
+          await rootBundle.loadString('assets/aralink-d9c4c-87ed3286d716.json');
+
+      final Map<String, dynamic> keyData = jsonDecode(serviceAccountKey);
+
+      final accountCredentials = ServiceAccountCredentials.fromJson(keyData);
+
+      const List<String> scopes = [
+        'https://www.googleapis.com/auth/cloud-platform',
+      ];
+
+      final client = await clientViaServiceAccount(accountCredentials, scopes);
+
+      final accessToken = client.credentials.accessToken;
+
+      return accessToken.data;
     } catch (e) {
-      print('Error requesting cancellation: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to request cancellation')),
+      throw Exception('Error getting access token: $e');
+    }
+  }
+
+
+Future<void> _sendPushNotification({
+    required String tuteeFcmToken,
+    required String title,
+    required String body,
+  }) async {
+    const String projectId = 'aralink-d9c4c';
+    final String url =
+        'https://fcm.googleapis.com/v1/projects/$projectId/messages:send';
+
+    try {
+      String accessToken = await _getAccessToken();
+
+      final Map<String, dynamic> message = {
+        'message': {
+          'token': tuteeFcmToken,
+          'notification': {
+            'title': title,
+            'body': body,
+          },
+          'data': {
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'status': 'new',
+          },
+        },
+      };
+
+      print("Sending message: ${jsonEncode(message)}");
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(message),
       );
+
+      if (response.statusCode == 200) {
+        print('Push notification sent successfully.');
+      } else {
+        print('Failed to send push notification: ${response.body}');
+      }
+    } catch (e) {
+      print('Error sending push notification: $e');
     }
   }
 

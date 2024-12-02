@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:aralink_app/screens/search-tutors-nearby/locationDetails.dart';
+import 'package:aralink_app/services/mail_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -194,10 +195,14 @@ Future<void> _bookTutor(BuildContext context) async {
         return;
       }
 
-
+    
+    
       Map<String, dynamic> tutorData =
           Map<String, dynamic>.from(tutorSnapshot.value as Map);
       String tutorFcmToken = tutorData['fcmToken'] ?? '';
+      String tutorEmail  = tutorData['email'] ?? '';
+      String tutorName = '${tutorData['firstName']} ${tutorData['lastName']}';
+
 
       Map<String, dynamic> tutorProfileData =
           Map<String, dynamic>.from(tutorProfileSnapshot.value as Map);
@@ -218,7 +223,9 @@ Future<void> _bookTutor(BuildContext context) async {
       Map<String, dynamic> tuteeData =
           Map<String, dynamic>.from(tuteeSnapshot.value as Map);
       String tuteeFcmToken = tuteeData['fcmToken'] ?? '';
-
+      String tuteeEmail  = tuteeData['email'] ?? '';
+      String tuteeName = '${tuteeData['firstName']} ${tuteeData['lastName']}';
+      
       // Use push to generate a unique key for the booking
       DatabaseReference bookingsRef =
           FirebaseDatabase.instance.ref('Bookings/$userId/$studentId');
@@ -247,9 +254,19 @@ Future<void> _bookTutor(BuildContext context) async {
             "You have a new booking request from tutee: ${tuteeData['firstName']} ${tuteeData['lastName']}.",
       );
 
+          // Send emails using MailService
+    await MailService.instance.sendMail(
+      'Hi $tuteeName,\n\nYour booking with $tutorName has been successfully created. The status is currently pending. You will be notified once the tutor confirms your booking.\n\nBest Regards,\nTutor Booking App',
+      'Booking Successful (Pending Status)',
+      tuteeEmail,
+    );
 
+    await MailService.instance.sendMail(
+      'Hi $tutorName,\n\nYou have a new booking request from $tuteeName. The status is currently pending. Please log in to the app to confirm or decline the request.\n\nBest Regards,\nTutor Booking App',
+      'New Booking Request (Pending Status)',
+      tutorEmail,
+    );
 
-    // Proceed with booking logic (same as your original code)
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
