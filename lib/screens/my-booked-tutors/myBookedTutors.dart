@@ -460,17 +460,18 @@ Future<void> _sendPushNotification({
               );
             }
 
-            String _formatTimestamp(String? timestamp) {
-              if (timestamp == null || timestamp.isEmpty) {
-                return 'N/A';
-              }
-              try {
-                DateTime dateTime = DateTime.parse(timestamp);
-                return DateFormat('MMMM dd, yyyy').format(dateTime);
-              } catch (e) {
-                return 'Invalid date format';
-              }
-            }
+String _formatTimestamp(String? timestamp) {
+  if (timestamp == null || timestamp.isEmpty) {
+    return 'N/A';
+  }
+  try {
+    DateTime dateTime = DateTime.parse(timestamp);
+    // Format to include both date and time
+    return DateFormat('MMMM dd, yyyy hh:mm a').format(dateTime);
+  } catch (e) {
+    return 'Invalid date format';
+  }
+}
 
             return ListView.builder(
               itemCount: bookedTutors.length,
@@ -524,6 +525,18 @@ Future<void> _sendPushNotification({
                           "Booked on: ${_formatTimestamp(booking['timestamp'])}",
                           style: TextStyle(fontSize: 12),
                         ),
+                        //                         Text(
+                        //   "Scheduled Date: ${booking['scheduleDate']}",
+                        //   style: TextStyle(fontSize: 12),
+                        // ),
+                        //                         Text(
+                        //   "Schedule Start Time: ${booking['scheduleStartTime']}",
+                        //   style: TextStyle(fontSize: 12),
+                        // ),
+                        //                                                 Text(
+                        //   "Schedule Start Time: ${booking['scheduleEndTime']}",
+                        //   style: TextStyle(fontSize: 12),
+                        // ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
